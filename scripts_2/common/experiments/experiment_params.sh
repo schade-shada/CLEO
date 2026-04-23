@@ -8,9 +8,9 @@
 ###   $3 = experiment  name     (optional, overrides the 'experiment' variable)
 ###
 
-path2build_override=${2:-""}
-build_flags_override=${3:-""}
-experiment=${4:-${experiment}}
+path2build_override=${1:-""}
+build_flags_override=${2:-""}
+experiment=${3:-${experiment}}
 
 if [ "${path2CLEO}" == "" ]; then
   echo "Please provide path to CLEO source directory"

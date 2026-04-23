@@ -45,11 +45,11 @@ if [ "${path2CLEO}" == "" ]; then
 fi
 
 [ -f "${path2CLEO}/scripts_2/common/experiments/experiment_params.sh" ] && \
-  source ${path2CLEO}/scripts_2/common/experiments/experiment_params.sh  "${path2CLEO}" "$5" "$6" "${experiment}"
+  source ${path2CLEO}/scripts_2/common/experiments/experiment_params.sh  "$5" "$6" "${experiment}"
 
 yacyaxtroot=${7:-${CLEO_YACYAXTROOT}}
 enabledebug=${8:-false}
-make_clean=${9:-true}
+make_clean=${9:-false}
 
 ### ----------------- export inputs -------------------- ###
 export CLEO_BUILDTYPE=${buildtype}
@@ -71,7 +71,7 @@ check_args_not_empty "${CLEO_BUILDTYPE}" "${CLEO_COMPILERNAME}" "${CLEO_PATH2CLE
 [ -f "${path2CLEO}/scripts_2/common/bash/src/print_configuration.sh" ] && \
   source "${path2CLEO}/scripts_2/common/bash/src/print_configuration.sh" "${experiment}"
 
-### --------------------- compile and build CLEO ------------------- ###
+### --------------------- build CLEO ------------------- ###
 buildcmd="${CLEO_PATH2CLEO}/scripts_2/common/bash/build_cleo.sh"
 if [ ! -f "${buildcmd}" ]; then
   echo "Error: build script not found at ${buildcmd}"
@@ -79,4 +79,10 @@ if [ ! -f "${buildcmd}" ]; then
 fi
 echo "${buildcmd}"
 eval "${buildcmd}"
-### ---------------------------------------------------------------- ###
+### ---------------------------------------------------- ###
+
+### ---------------- compile experiment --------------- ###
+compilecmd="${CLEO_PATH2CLEO}/scripts_2/common/bash/compile_cleo.sh \"${executables}\" ${make_clean}"
+echo ${compilecmd}
+eval ${compilecmd}
+### ---------------------------------------------------- ###
