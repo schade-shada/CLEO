@@ -25,96 +25,102 @@ fi
 case "${experiment}" in
 
   as2017)
-    path2build="${path2CLEO}/build_as2017"
+    path2build=${path2CLEO}/build_adia0d/as2017
     build_flags="-DCLEO_COUPLED_DYNAMICS=cvode -DCLEO_DOMAIN=cartesian \
       -DCLEO_NO_ROUGHPAPER=true -DCLEO_NO_PYBINDINGS=true"
     executables="adia0d"
-    ;;
 
-  cuspbifurc)
-    path2build="${path2CLEO}/build_cuspbifurc"
-    build_flags="-DCLEO_COUPLED_DYNAMICS=cvode -DCLEO_DOMAIN=cartesian \
-      -DCLEO_NO_ROUGHPAPER=true -DCLEO_NO_PYBINDINGS=true"
-    executables="adia0d"
+    pythonscript=${path2CLEO}/examples/adiabaticparcel/as2017.py
+    src_config_filename=${path2CLEO}/examples/adiabaticparcel/src/config/as2017_config.yaml
+    script_args="${src_config_filename} \
+      --do_inputfiles --do_run_executable --do_plot_results"
+
     ;;
 
   breakup)
-    path2build="${path2CLEO}/build_breakup"
-    build_flags="-DCLEO_COUPLED_DYNAMICS=null -DCLEO_DOMAIN=cartesian \
-      -DCLEO_NO_ROUGHPAPER=true -DCLEO_NO_PYBINDINGS=true"
-    executables="longcolls lowlistcolls szakallurbichcolls testikstraubcolls"
-    ;;
+      path2build=${path2CLEO}/build_colls0d/breakup/
+      build_flags="-DCLEO_COUPLED_DYNAMICS=null -DCLEO_DOMAIN=cartesian \
+        -DCLEO_NO_ROUGHPAPER=true -DCLEO_NO_PYBINDINGS=true"
+      executables="longcolls lowlistcolls szakallurbichcolls testikstraubcolls"
 
-  shima2009)
-    path2build="${path2CLEO}/build_shima2009"
-    build_flags="-DCLEO_COUPLED_DYNAMICS=null -DCLEO_DOMAIN=cartesian \
-      -DCLEO_NO_ROUGHPAPER=true -DCLEO_NO_PYBINDINGS=true"
-    executables="golcolls longcolls"
-    ;;
+      pythonscript=${path2CLEO}/examples/boxmodelcollisions/breakup.py
+      src_config_filename=${path2CLEO}/examples/boxmodelcollisions/src/config/breakup_config.yaml
+      script_args="${src_config_filename} --kernels long lowlist szakallurbich testikstraub \
+        --do_inputfiles --do_run_executable --do_plot_results"
+
+      ;;
 
   constthermo2d)
-    path2build="${path2CLEO}/build_constthermo2d"
-    build_flags="-DCLEO_COUPLED_DYNAMICS=fromfile -DCLEO_DOMAIN=cartesian \
+      path2build=${path2CLEO}/build_const2d/
+      build_flags="-DCLEO_COUPLED_DYNAMICS=fromfile -DCLEO_DOMAIN=cartesian \
+        -DCLEO_NO_ROUGHPAPER=true -DCLEO_NO_PYBINDINGS=true"
+      executables="const2d"
+
+      pythonscript=${path2CLEO}/examples/constthermo2d/constthermo2d.py
+      src_config_filename=${path2CLEO}/examples/constthermo2d/src/config/const2d_config.yaml
+      script_args="${src_config_filename} \
+        --do_inputfiles --do_run_executable --do_plot_results"
+      ;;
+
+  cuspbifurc)
+    path2build=${path2CLEO}/build_adia0d/cuspbifurc/
+    build_flags="-DCLEO_COUPLED_DYNAMICS=cvode -DCLEO_DOMAIN=cartesian \
       -DCLEO_NO_ROUGHPAPER=true -DCLEO_NO_PYBINDINGS=true"
-    executables="const2d"
+    executables="adia0d"
+
+    pythonscript=${path2CLEO}/examples/adiabaticparcel/cuspbifurc.py
+    src_config_filename=${path2CLEO}/examples/adiabaticparcel/src/config/cuspbifurc_config.yaml
+    script_args="${src_config_filename} \
+      --do_inputfiles --do_run_executable --do_plot_results"
     ;;
 
   divfree2d)
-    path2build="${path2CLEO}/build_divfree2d"
+    path2build=${path2CLEO}/build_divfree2d/
     build_flags="-DCLEO_COUPLED_DYNAMICS=fromfile -DCLEO_DOMAIN=cartesian \
       -DCLEO_NO_ROUGHPAPER=true -DCLEO_NO_PYBINDINGS=true"
     executables="divfree2d"
+
+    pythonscript=${path2CLEO}/examples/divfreemotion/divfree2d.py
+    src_config_filename=${path2CLEO}/examples/divfreemotion/src/config/divfree2d_config.yaml
+    script_args="${src_config_filename} \
+      --do_inputfiles --do_run_executable --do_plot_results"
     ;;
 
   eurec4a1d)
-    path2build="${path2CLEO}/build_eurec4a1d"
+    path2build=${path2CLEO}/build_eurec4a1d/
     build_flags="-DCLEO_COUPLED_DYNAMICS=fromfile -DCLEO_DOMAIN=cartesian \
       -DCLEO_NO_ROUGHPAPER=true -DCLEO_NO_PYBINDINGS=true"
     executables="eurec4a1d"
+
+    pythonscript=${path2CLEO}/examples/eurec4a1d/eurec4a1d.py
+    src_config_filename=${path2CLEO}/examples/eurec4a1d/src/config/eurec4a1d_config.yaml
+    script_args="${src_config_filename} \
+      --do_inputfiles --do_run_executable --do_plot_results"
     ;;
 
   rainshaft1d)
-    path2build="${path2CLEO}/build_rainshaft1d"
+    path2build=${path2CLEO}/build_rshaft1d/
     build_flags="-DCLEO_COUPLED_DYNAMICS=fromfile -DCLEO_DOMAIN=cartesian \
       -DCLEO_NO_ROUGHPAPER=true -DCLEO_NO_PYBINDINGS=true"
     executables="rshaft1d"
+
+    pythonscript=${path2CLEO}/examples/rainshaft1d/rainshaft1d.py
+    src_config_filename=${path2CLEO}/examples/rainshaft1d/src/config/rshaft1d_config.yaml
+    script_args="${src_config_filename} \
+      --do_inputfiles --do_run_executable --do_plot_results"
     ;;
 
-  python_bindings)
-    path2build="${path2CLEO}/build_python_bindings"
-    build_flags="-DCLEO_COUPLED_DYNAMICS=numpy -DCLEO_DOMAIN=cartesian \
-      -DCLEO_NO_ROUGHPAPER=true -DCLEO_PYTHON=${CLEO_PYTHON}"
-    executables="cleo_python_bindings"
-    ;;
-
-  kokkostools)
-    path2build="${path2CLEO}/build_kokkostools"
-    build_flags="-DCLEO_COUPLED_DYNAMICS=fromfile -DCLEO_DOMAIN=cartesian \
+  shima2009)
+    path2build=${path2CLEO}/build_colls0d/shima2009/
+    build_flags="-DCLEO_COUPLED_DYNAMICS=null -DCLEO_DOMAIN=cartesian \
       -DCLEO_NO_ROUGHPAPER=true -DCLEO_NO_PYBINDINGS=true"
-    executables="kokkostools"
-    ;;
+    executables="golcolls longcolls"
 
-  fromfile)
-    path2build="${path2CLEO}/build_fromfile"
-    build_flags="-DCLEO_COUPLED_DYNAMICS=fromfile -DCLEO_DOMAIN=cartesian \
-      -DCLEO_NO_ROUGHPAPER=true -DCLEO_NO_PYBINDINGS=true"
-    executables="fromfile"
+    pythonscript=${path2CLEO}/examples/boxmodelcollisions/shima2009.py
+    src_config_filename=${path2CLEO}/examples/boxmodelcollisions/src/config/shima2009_config.yaml
+    script_args="${src_config_filename} --kernels golovin long1 long2 \
+      --do_inputfiles --do_run_executable --do_plot_results"
     ;;
-
-  fromfile_irreg)
-    path2build="${path2CLEO}/build_fromfile_irreg"
-    build_flags="-DCLEO_COUPLED_DYNAMICS=fromfile -DCLEO_DOMAIN=cartesian \
-      -DCLEO_NO_ROUGHPAPER=true -DCLEO_NO_PYBINDINGS=true"
-    executables="fromfile_irreg"
-    ;;
-
-  bubble3d)
-    path2build="${path2CLEO}/build_bubble3d"
-    build_flags="-DCLEO_COUPLED_DYNAMICS=yac -DCLEO_DOMAIN=cartesian \
-      -DCLEO_NO_ROUGHPAPER=true -DCLEO_NO_PYBINDINGS=true"
-    executables="bubble3d"
-    ;;
-
   *)
     echo "Error: unknown experiment '${experiment}'."
     echo "Available: as2017 cuspbifurc breakup shima2009 constthermo2d divfree2d"

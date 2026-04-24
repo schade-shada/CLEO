@@ -49,7 +49,7 @@ fi
 
 yacyaxtroot=${7:-${CLEO_YACYAXTROOT}}
 enabledebug=${8:-false}
-make_clean=${9:-false}
+make_clean=${9:-true}
 
 ### ----------------- export inputs -------------------- ###
 export CLEO_BUILDTYPE=${buildtype}
@@ -85,4 +85,22 @@ eval "${buildcmd}"
 compilecmd="${CLEO_PATH2CLEO}/scripts_2/common/bash/compile_cleo.sh \"${executables}\" ${make_clean}"
 echo ${compilecmd}
 eval ${compilecmd}
+### ---------------------------------------------------- ###
+
+### ----------- run Python plot/analysis script -------- ###
+if [ -z "${pythonscript}" ]; then
+  echo "Error: no Python script provided."
+  exit 1
+fi
+if [ ! -f "${pythonscript}" ]; then
+  echo "Error: Python script not found at ${pythonscript}"
+  exit 1
+fi
+if [ -z "${CLEO_PYTHON}" ]; then
+  echo "Error: CLEO_PYTHON is not set."
+  exit 1
+fi
+
+echo "Running: ${CLEO_PYTHON} ${pythonscript} ${path2CLEO} ${CLEO_PATH2BUILD} ${script_args}"
+${CLEO_PYTHON} "${pythonscript}" "${path2CLEO}" "${CLEO_PATH2BUILD}" ${script_args}
 ### ---------------------------------------------------- ###
