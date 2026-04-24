@@ -12,7 +12,7 @@ set -e
 ###                       [enabledebug] [make_clean]
 ###
 ###   All arguments are optional — defaults come from environment variables
-###   and experiment_params.sh.
+###   and example_params.sh.
 ###
 ### Arguments:
 ###   $1  experiment     Name of experiment to run       (default: set below)
@@ -25,7 +25,7 @@ set -e
 ###   $8  enabledebug    true | false                    (default: false)
 ###   $9  make_clean     true | false                    (default: true)
 ###
-### Available experiments (see common/examples/experiment_params.sh for full details):
+### Available examples (see common/examples/example_params.sh for full details):
 ###   as2017  cuspbifurc  breakup  shima2009  constthermo2d  divfree2d
 ###   eurec4a1d  rainshaft1d  python_bindings  kokkostools
 ###   fromfile  fromfile_irreg  bubble3d
@@ -44,12 +44,12 @@ if [ "${path2CLEO}" == "" ]; then
   exit 1
 fi
 
-[ -f "${path2CLEO}/scripts_2/common/experiments/experiment_params.sh" ] && \
-  source ${path2CLEO}/scripts_2/common/experiments/experiment_params.sh  "$5" "$6" "${experiment}"
+[ -f "${path2CLEO}/scripts_2/common/examples/example_params.sh" ] && \
+  source ${path2CLEO}/scripts_2/common/examples/example_params.sh  "$5" "$6" "${experiment}"
 
 yacyaxtroot=${7:-${CLEO_YACYAXTROOT}}
 enabledebug=${8:-false}
-make_clean=${9:-true}
+make_clean=${9:-false}
 
 ### ----------------- export inputs -------------------- ###
 export CLEO_BUILDTYPE=${buildtype}

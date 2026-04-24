@@ -98,6 +98,18 @@ case "${experiment}" in
       --do_inputfiles --do_run_executable --do_plot_results"
     ;;
 
+  python_bindings)
+  path2build=${path2CLEO}/build_pybind/
+  build_flags="-DCLEO_COUPLED_DYNAMICS=numpy -DCLEO_DOMAIN=cartesian \
+    -DCLEO_NO_ROUGHPAPER=true -DCLEO_PYTHON=${CLEO_PYTHON}"
+  executables="cleo_python_bindings"
+
+  pythonscript=${path2CLEO}/examples/python_bindings/python_bindings.py
+  src_config_filename=${path2CLEO}/examples/python_bindings/src/config/pybind_config.yaml
+  script_args="${src_config_filename} \
+    --do_inputfiles --do_run_executable --do_plot_results"
+  ;;
+
   rainshaft1d)
     path2build=${path2CLEO}/build_rshaft1d/
     build_flags="-DCLEO_COUPLED_DYNAMICS=fromfile -DCLEO_DOMAIN=cartesian \

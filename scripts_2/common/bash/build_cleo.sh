@@ -13,8 +13,8 @@ if [ -f "${MACHINE_BASH_SRC}/build_flags.sh" ]; then
   source ${MACHINE_BASH_SRC}/build_flags.sh
 fi
 
-if [ -f "${MACHINE_BASH_SRC}/build_yac.sh" ]; then
-  source ${MACHINE_BASH_SRC}/build_yac.sh
+if [ -f "${COMMON_BASH_SRC}/build_yac.sh" ]; then
+  source ${COMMON_BASH_SRC}/build_yac.sh
 fi
 
 ### ---------------------------------------------------- ###
