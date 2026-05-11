@@ -17,6 +17,7 @@ jobs:
           activate-environment: cleodev
           auto-activate-base: false
           use-mamba: true
+          python-version: 3.13
           miniforge-version: 'latest'
           conda-remove-defaults: true
 
