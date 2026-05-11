@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     name: check commits with cocogitto
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -21,7 +21,7 @@ jobs:
   test_cleopy_build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: astral-sh/setup-uv@v3
 
       - name: build and test cleopy
@@ -45,7 +45,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Perform semantic versioning release
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
