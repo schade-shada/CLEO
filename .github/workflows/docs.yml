@@ -12,7 +12,7 @@ jobs:
       - uses: actions/checkout@v6
 
       - name: Initialise Mamba
-        uses: conda-incubator/setup-miniconda@v3
+        uses: conda-incubator/setup-miniconda@v4
         with:
           activate-environment: cleodev
           auto-activate-base: false
