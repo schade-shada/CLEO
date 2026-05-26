@@ -8,12 +8,15 @@ set -e
 COMMON_BASH_SRC="${CLEO_PATH2CLEO}/scripts_2/common/bash/src"
 MACHINE_BASH_SRC="${CLEO_PATH2CLEO}/scripts_2/${CLEO_MACHINE}/bash/src"
 
+source ${COMMON_BASH_SRC}/check_inputs.sh
+check_machine
+
 ### -------------- prepare to build CLEO --------------- ###
 if [ -f "${MACHINE_BASH_SRC}/build_flags.sh" ]; then
   source ${MACHINE_BASH_SRC}/build_flags.sh
 fi
 
-if [ -f "${COMMON_BASH_SRC}/build_yac.sh" ]; then
+if [ -f "${COMMON_BASH_SRC}/build_yac.sh" ] && [ -n "${CLEO_FYAMLLIB}" ]; then
   source ${COMMON_BASH_SRC}/build_yac.sh
 fi
 
