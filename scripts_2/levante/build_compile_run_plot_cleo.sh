@@ -49,7 +49,13 @@ fi
 [ -f "${path2CLEO}/scripts_2/common/examples/example_params.sh" ] && \
   source ${path2CLEO}/scripts_2/common/examples/example_params.sh "$5" "$6" "${experiment}"
 
-yacyaxtroot=${7:-${CLEO_YACYAXTROOT}}
+if [[ -n "${CLEO_YACYAXTROOT}" ]] && [[ "${CLEO_YACYAXTROOT}" != */${compilername} ]]; then
+  _default_yacyaxtroot="${CLEO_YACYAXTROOT%/}/${compilername}"
+else
+  _default_yacyaxtroot="${CLEO_YACYAXTROOT}"
+fi
+
+yacyaxtroot=${7:-${_default_yacyaxtroot}}
 enabledebug=${8:-false}
 make_clean=${9:-false}
 stacksize_limit=${10:-204800}
