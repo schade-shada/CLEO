@@ -10,10 +10,6 @@ source ${COMMON_BASH_SRC}/check_inputs.sh
 check_args_not_empty "${CLEO_COMPILERNAME}" "${CLEO_ENABLEDEBUG}"
 ### ---------------------------------------------------- ###
 
-source /etc/profile
-module purge
-spack unload --all
-
 ### -------- choose compiler(s) and their flags -------- ###
 source ${LEVANTE_BASH_SRC}/levante_packages.sh
 
@@ -71,28 +67,12 @@ export CLEO_KOKKOS_BASIC_FLAGS="${CLEO_KOKKOS_BASIC_FLAGS} \
   -DKokkos_ARCH_NATIVE=ON -DKokkos_ENABLE_SERIAL=ON"
 ### ---------------------------------------------------- ###
 
-### ------ load YAC modules and set CLEO_FYAMLLIB ------- ###
-if [ "${CLEO_COMPILERNAME}" == "gcc" ]
-then
-  module load ${levante_gcc_netcdf_yac}
-  spack load ${levante_gcc_openblas_yac}
-  export CLEO_FYAMLLIB=${levante_gcc_fyamllib}
-elif [ "${CLEO_COMPILERNAME}" == "intel" ]
-then
-  module load ${levante_intel_netcdf_yac}
-  spack load ${levante_intel_openblas_yac}
-  export CLEO_FYAMLLIB=${levante_intel_fyamllib}
-fi
-### ---------------------------------------------------- ###
-
 ### ------ choose host/device parallelism flags --------- ###
 if [[ "${CLEO_BUILDTYPE}" == "openmp" ]]; then
   source ${COMMON_BASH_SRC}/build_openmp.sh
 elif [[ "${CLEO_BUILDTYPE}" == "threads" ]]; then
   source ${COMMON_BASH_SRC}/build_threads.sh
 elif [[ "${CLEO_BUILDTYPE}" == "cuda" ]]; then
-  # openmp on host + cuda on device
-  export CLEO_KOKKOS_HOST_FLAGS="${CLEO_KOKKOS_HOST_FLAGS} -DKokkos_ENABLE_OPENMP=ON"
   source ${COMMON_BASH_SRC}/build_cuda.sh
 fi
 ### ---------------------------------------------------- ###

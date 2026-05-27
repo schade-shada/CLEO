@@ -33,13 +33,14 @@ set -e
 ###   fromfile  fromfile_irreg  bubble3d
 ### ============================================================ ###
 
-### step 1: configure
+### ----------------- configure -------------------- ###
 export CLEO_MACHINE="levante"
+export CLEO_PYTHON=${CLEO_PYTHON:-$(which python3)}
 
 experiment=${1:-"as2017"}
 buildtype=${2:-"openmp"}
 compilername=${3:-gcc}
-path2CLEO=${4:-${CLEO_PATH2CLEO}}
+path2CLEO=${4:-${HOME}/CLEO}
 
 if [ "${path2CLEO}" == "" ]; then
   echo "Please provide path to CLEO source directory"
@@ -49,16 +50,11 @@ fi
 [ -f "${path2CLEO}/scripts_2/common/examples/example_params.sh" ] && \
   source ${path2CLEO}/scripts_2/common/examples/example_params.sh "$5" "$6" "${experiment}"
 
-if [[ -n "${CLEO_YACYAXTROOT}" ]] && [[ "${CLEO_YACYAXTROOT}" != */${compilername} ]]; then
-  _default_yacyaxtroot="${CLEO_YACYAXTROOT%/}/${compilername}"
-else
-  _default_yacyaxtroot="${CLEO_YACYAXTROOT}"
-fi
-
-yacyaxtroot=${7:-${_default_yacyaxtroot}}
+yacyaxtroot=${7:-${HOME}/yacyaxt/${compilername}}
 enabledebug=${8:-false}
 make_clean=${9:-false}
 stacksize_limit=${10:-204800}
+### ---------------------------------------------------- ###
 
 ### ----------------- export inputs -------------------- ###
 export CLEO_BUILDTYPE=${buildtype}
@@ -87,13 +83,13 @@ if [ ! -f "${buildcmd}" ]; then
   exit 1
 fi
 echo "${buildcmd}"
-eval "${buildcmd}"
+source "${buildcmd}"
 ### ---------------------------------------------------- ###
 
 ### ---------------- compile experiment ---------------- ###
-compilecmd="${CLEO_PATH2CLEO}/scripts_2/common/bash/compile_cleo.sh \"${executables}\" ${make_clean}"
-echo ${compilecmd}
-eval ${compilecmd}
+compilecmd="${CLEO_PATH2CLEO}/scripts_2/common/bash/compile_cleo.sh"
+echo "${compilecmd} \"${executables}\" ${make_clean}"
+source "${compilecmd}" "${executables}" "${make_clean}"
 ### ---------------------------------------------------- ###
 
 ### ------------- load runtime environment ------------- ###
