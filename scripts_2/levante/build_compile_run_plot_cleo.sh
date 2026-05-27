@@ -38,7 +38,7 @@ export CLEO_MACHINE="levante"
 
 experiment=${1:-"as2017"}
 buildtype=${2:-"openmp"}
-compilername=${3:-intel}
+compilername=${3:-gcc}
 path2CLEO=${4:-${CLEO_PATH2CLEO}}
 
 if [ "${path2CLEO}" == "" ]; then
