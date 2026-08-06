@@ -108,14 +108,14 @@ def main(
     ]  # gbxindex of initial SDs to plot if any(isfigures) (nb. "all" can be very slow)
 
     ### --- settings for 2-D gridbox boundaries --- ###
-    zgrid = [0, 1500, 75]  # evenly spaced zhalf coords [zmin, zmax, zdelta] [m]
-    xgrid = [0, 1500, 75]  # evenly spaced xhalf coords [m]
+    zgrid = [0, 1500, 20]  # evenly spaced zhalf coords [zmin, zmax, zdelta] [m]
+    xgrid = [0, 650000, 20]  # evenly spaced xhalf coords [m]
     ygrid = np.array([0, 20])  # array of yhalf coords [m]
 
     ### --- settings for initial superdroplets --- ###
     # settings for initial superdroplet coordinates
     zlim = 500  # max z coord of superdroplets
-    npergbx = 8  # number of superdroplets per gridbox
+    npergbx = 128  # number of superdroplets per gridbox
 
     # [min, max] range of initial superdroplet radii (and implicitly solute masses)
     rspan = [3e-9, 3e-6]  # [m]
@@ -134,7 +134,7 @@ def main(
     WMAX = 0.6  # [m/s]
     VVEL = None  # [m/s]
     Zlength = 1500  # [m]
-    Xlength = 1500  # [m]
+    Xlength = 650000  # [m]
     qvapmethod = "sratio"
     Zbase = 750  # [m]
     sratios = [0.99, 1.0025]  # s_ratio [below, above] Zbase

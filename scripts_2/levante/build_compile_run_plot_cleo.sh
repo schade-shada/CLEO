@@ -120,19 +120,25 @@ configure_machine_runtime_settings "${stacksize_limit}"
 ### ---------------------------------------------------- ###
 
 ### ----------- run Python plot/analysis script -------- ###
-if [ -z "${pythonscript}" ]; then
-  echo "Error: no Python script provided."
-  exit 1
-fi
-if [ ! -f "${pythonscript}" ]; then
-  echo "Error: Python script not found at ${pythonscript}"
-  exit 1
-fi
-if [ -z "${CLEO_PYTHON}" ]; then
-  echo "Error: CLEO_PYTHON is not set."
-  exit 1
+base_args="${script_args//--do_inputfiles/}"
+base_args="${base_args//--do_run_executable/}"
+base_args="${base_args//--do_plot_results/}"
+
+# 1) Input files (no nsys)
+echo "Running (input): ${CLEO_PYTHON} ${pythonscript} ${path2CLEO} ${CLEO_PATH2BUILD} ${base_args} --do_inputfiles"
+${CLEO_PYTHON} "${pythonscript}" "${path2CLEO}" "${CLEO_PATH2BUILD}" ${base_args} --do_inputfiles
+
+# 2) Executable run (with nsys, if provided)
+if [ -n "${NSYS_PREFIX}" ]; then
+  read -r -a nsys_cmd <<< "${NSYS_PREFIX}"
+  echo "Running (profiled run): ${NSYS_PREFIX} ${CLEO_PYTHON} ${pythonscript} ${path2CLEO} ${CLEO_PATH2BUILD} ${base_args} --do_run_executable"
+  "${nsys_cmd[@]}" "${CLEO_PYTHON}" "${pythonscript}" "${path2CLEO}" "${CLEO_PATH2BUILD}" ${base_args} --do_run_executable
+else
+  echo "Running (run): ${CLEO_PYTHON} ${pythonscript} ${path2CLEO} ${CLEO_PATH2BUILD} ${base_args} --do_run_executable"
+  ${CLEO_PYTHON} "${pythonscript}" "${path2CLEO}" "${CLEO_PATH2BUILD}" ${base_args} --do_run_executable
 fi
 
-echo "Running: ${CLEO_PYTHON} ${pythonscript} ${path2CLEO} ${CLEO_PATH2BUILD} ${script_args}"
-${CLEO_PYTHON} "${pythonscript}" "${path2CLEO}" "${CLEO_PATH2BUILD}" ${script_args}
+# 3) Plot (no nsys)
+echo "Running (plot): ${CLEO_PYTHON} ${pythonscript} ${path2CLEO} ${CLEO_PATH2BUILD} ${base_args} --do_plot_results"
+${CLEO_PYTHON} "${pythonscript}" "${path2CLEO}" "${CLEO_PATH2BUILD}" ${base_args} --do_plot_results
 ### ---------------------------------------------------- ###
