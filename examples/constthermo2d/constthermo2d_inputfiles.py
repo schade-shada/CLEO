@@ -134,7 +134,7 @@ def main(
     WMAX = 0.6  # [m/s]
     VVEL = None  # [m/s]
     Zlength = 1500  # [m]
-    Xlength = 650000  # [m]
+    Xlength = 1500  # [m]
     qvapmethod = "sratio"
     Zbase = 750  # [m]
     sratios = [0.99, 1.0025]  # s_ratio [below, above] Zbase
