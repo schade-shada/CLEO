@@ -5,7 +5,7 @@
 #SBATCH --nodes=1
 #SBATCH --gpus=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=1
+#SBATCH --cpus-per-task=128
 #SBATCH --mem=150G
 #SBATCH --time=02:00:00
 #SBATCH --mail-user=harshada.balasubramanian@mpimet.mpg.de
@@ -22,7 +22,7 @@ export KOKKOS_TOOLS_LIBS=/home/m/m301159/CLEO_profiling/kokkos-tools/profiling/n
 source "${CLEO_PATH2CLEO}/scripts_2/common/check_inputs.sh"
 check_args_not_empty "${CLEO_PYTHON}" "${CLEO_YACYAXTROOT}"
 
-nsys_output="${SLURM_SUBMIT_DIR:-$(pwd)}/nsys_output"
+nsys_output="/scratch/m/m301159/nsys_output"
 # export CLEO_PYTHON="nsys profile \
 #   -t cuda,mpi,nvtx,osrt,cublas \
 #   --gpu-metrics-device=all \
@@ -32,6 +32,5 @@ nsys_output="${SLURM_SUBMIT_DIR:-$(pwd)}/nsys_output"
 #   ${CLEO_PYTHON}"
 
 export NSYS_PREFIX="nsys profile -t cuda,mpi,nvtx,osrt,cublas --gpu-metrics-device=all --cuda-memory-usage=true --stats=true -o ${nsys_output}"
-
 
 "${CLEO_PATH2CLEO}/scripts_2/levante/build_compile_run_plot_cleo.sh" constthermo2d cuda gcc "${CLEO_PATH2CLEO}"
