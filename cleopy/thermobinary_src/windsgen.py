@@ -163,7 +163,7 @@ class DryAdiabat2DFlowField:
 
     def wvel_uvel_from_flowfield(self, gbxbounds, ndims):
         zfaces = rgrid.coords_forgridboxfaces(gbxbounds, ndims, "z")[0]
-        xfaces = rgrid.coords_forgridboxfaces(gbxbounds, ndims, "x")[1]
+        xfaces = rgrid.coords_forgridboxfaces(gbxbounds, ndims, "x")[0]
         rhotilda_zfaces = self.dryadiabat.rhotilda(zfaces)
         rhotilda_xfaces = self.dryadiabat.rhotilda(xfaces)
 
