@@ -136,23 +136,24 @@ inline Observer auto create_superdrops_observer(const unsigned int interval, Dat
 template <typename Dataset, typename Store>
 inline Observer auto create_observer(const Config& config, const Timesteps& tsteps,
                                      Dataset& dataset, Store& store) {
-  const auto obsstep = tsteps.get_obsstep();
-  const auto maxchunk = config.get_maxchunk();
-  const auto ngbxs = config.get_ngbxs();
+  // const auto obsstep = tsteps.get_obsstep();
+  // const auto maxchunk = config.get_maxchunk();
+  // const auto ngbxs = config.get_ngbxs();
 
-  const Observer auto obs0 = StreamOutObserver(obsstep * 10, &step2realtime);
+  // const Observer auto obs0 = StreamOutObserver(obsstep * 10, &step2realtime);
 
-  const Observer auto obs1 = TimeObserver(obsstep, dataset, store, maxchunk, &step2dimlesstime);
+  // const Observer auto obs1 = TimeObserver(obsstep, dataset, store, maxchunk, &step2dimlesstime);
 
-  const Observer auto obs2 = GbxindexObserver(dataset, store, maxchunk, ngbxs);
+  // const Observer auto obs2 = GbxindexObserver(dataset, store, maxchunk, ngbxs);
 
-  const Observer auto obs3 = NsupersObserver(obsstep, dataset, maxchunk, ngbxs);
+  // const Observer auto obs3 = NsupersObserver(obsstep, dataset, maxchunk, ngbxs);
 
-  const Observer auto obs4 = MassMomentsObserver(obsstep, dataset, store, maxchunk, ngbxs);
+  // const Observer auto obs4 = MassMomentsObserver(obsstep, dataset, store, maxchunk, ngbxs);
 
-  const Observer auto obssd = create_superdrops_observer(obsstep, dataset, store, maxchunk);
+  // const Observer auto obssd = create_superdrops_observer(obsstep, dataset, store, maxchunk);
 
-  return obssd >> obs4 >> obs3 >> obs2 >> obs1 >> obs0;
+  // return obssd >> obs4 >> obs3 >> obs2 >> obs1 >> obs0;
+  return NullObserver{};
 }
 
 template <typename Dataset, typename Store>
