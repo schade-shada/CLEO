@@ -187,7 +187,7 @@ class MoveSupersInDomain {
   template <SDMMonitor SDMMo>
   void move_supers_in_gridboxes(const GbxMaps& gbxmaps, const viewd_gbx d_gbxs,
                                 const subviewd_supers domainsupers, const SDMMo mo) const {
-    Kokkos::Profiling::ScopedRegion region("sdm_movement_move_in_gridboxes");
+    // Kokkos::Profiling::ScopedRegion region("sdm_movement_move_in_gridboxes");
 
     const size_t ngbxs(d_gbxs.extent(0));
     const auto functor = MoveSupersInGridboxesFunctor<GbxMaps, M, SDMMo>{sdmotion, gbxmaps, d_gbxs,
@@ -211,7 +211,7 @@ class MoveSupersInDomain {
    */
   SupersInDomain move_supers_between_gridboxes(const GbxMaps& gbxmaps, const viewd_gbx d_gbxs,
                                                SupersInDomain& allsupers) const {
-    Kokkos::Profiling::ScopedRegion region("sdm_movement_between_gridboxes");
+    // Kokkos::Profiling::ScopedRegion region("sdm_movement_between_gridboxes");
 
     allsupers = transport_across_domain(gbxmaps, d_gbxs, allsupers);
 
@@ -241,9 +241,9 @@ class MoveSupersInDomain {
     allsupers = move_supers_between_gridboxes(gbxmaps, d_gbxs, allsupers);
 
     /* step (4) */
-    Kokkos::Profiling::pushRegion("sdm_movement_boundary_conditions");
+    // Kokkos::Profiling::pushRegion("sdm_movement_boundary_conditions");
     allsupers = boundary_conditions.apply(gbxmaps, d_gbxs, allsupers);
-    Kokkos::Profiling::popRegion();
+    // Kokkos::Profiling::popRegion();
 
     return allsupers;
   }
@@ -258,7 +258,7 @@ class MoveSupersInDomain {
    */
   void effect_on_hydrometeor_states(const viewd_gbx d_gbxs,
                                     const subviewd_constsupers domainsupers) const {
-    Kokkos::Profiling::ScopedRegion region("sdm_movement_effect_on_hydrometeor_states");
+    // Kokkos::Profiling::ScopedRegion region("sdm_movement_effect_on_hydrometeor_states");
 
     const size_t ngbxs(d_gbxs.extent(0));
     const auto functor = EffectOnHydrometeorStatesFunctor{d_gbxs, domainsupers};

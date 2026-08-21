@@ -156,7 +156,7 @@ class SDMMethods {
    */
   void superdrops_movement(const unsigned int t_sdm, viewd_gbx d_gbxs, SupersInDomain& allsupers,
                            const SDMMonitor auto mo) const {
-    Kokkos::Profiling::ScopedRegion region("timestep_sdm_movement");
+    // Kokkos::Profiling::ScopedRegion region("timestep_sdm_movement");
 
     allsupers = movesupers.run_step(t_sdm, gbxmaps, d_gbxs, allsupers, mo);
   }
@@ -213,7 +213,7 @@ class SDMMethods {
   template <SDMMonitor SDMMo>
   void sdm_microphysics(const unsigned int t_sdm, const unsigned int t_next, const viewd_gbx d_gbxs,
                         SupersInDomain& allsupers, const SDMMo mo) const {
-    Kokkos::Profiling::ScopedRegion region("timestep_sdm_microphysics");
+    // Kokkos::Profiling::ScopedRegion region("timestep_sdm_microphysics");
 
     const auto domainsupers = allsupers.domain_supers();
     const auto any_nsupers_change = sdm_microphysics(t_sdm, t_next, d_gbxs, domainsupers, mo);

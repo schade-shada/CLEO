@@ -261,7 +261,7 @@ void print_gbxs(const viewh_constgbx gbxs);
 template <GridboxMaps GbxMaps, typename GbxInitConds>
 dualview_gbx create_gbxs(const GbxMaps& gbxmaps, const GbxInitConds& gbxic,
                          const SupersInDomain& allsupers) {
-  Kokkos::Profiling::ScopedRegion region("init_gbxs");
+  // Kokkos::Profiling::ScopedRegion region("init_gbxs");
 
   std::cout << "\n--- create gridboxes ---\ninitialising\n";
   const auto domainsupers = allsupers.domain_supers_readonly();

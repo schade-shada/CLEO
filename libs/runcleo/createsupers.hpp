@@ -110,7 +110,7 @@ void print_supers(const viewd_constsupers totsupers);
  */
 template <typename SuperdropInitConds>
 SupersInDomain create_supers(const SuperdropInitConds& sdic, const unsigned int gbxindex_max) {
-  Kokkos::Profiling::ScopedRegion region("init_supers");
+  // Kokkos::Profiling::ScopedRegion region("init_supers");
 
   // Log message and create superdrops using the initial conditions
   std::cout << "\n--- create superdrops ---\ninitialising\n";

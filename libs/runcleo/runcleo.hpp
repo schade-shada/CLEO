@@ -219,7 +219,7 @@ class RunCLEO {
    */
   void sdm_step(const unsigned int t_mdl, unsigned int t_next, dualview_gbx gbxs,
                 SupersInDomain& allsupers) const {
-    Kokkos::Profiling::ScopedRegion region("timestep_sdm");
+    // Kokkos::Profiling::ScopedRegion region("timestep_sdm");
 
     gbxs.sync_device();  // get device up to date with host
     sdm.run_step(t_mdl, t_next, gbxs.view_device(), allsupers);
@@ -238,7 +238,7 @@ class RunCLEO {
    * @param t_next Next timestep of the coupled model.
    */
   void coupldyn_step(const unsigned int t_mdl, const unsigned int t_next) const {
-    Kokkos::Profiling::ScopedRegion region("timestep_coupldyn");
+    // Kokkos::Profiling::ScopedRegion region("timestep_coupldyn");
 
     coupldyn.run_step(t_mdl, t_next);
   }
@@ -302,22 +302,22 @@ class RunCLEO {
    * @return 0 on success.
    */
   int operator()(const InitialConditions auto& initconds, const unsigned int t_end) const {
-    Kokkos::Profiling::pushRegion("runcleo");
+    // Kokkos::Profiling::pushRegion("runcleo");
 
     // create runtime objects and prepare CLEO for timestepping
-    Kokkos::Profiling::pushRegion("init");
+    // Kokkos::Profiling::pushRegion("init");
     auto allsupers =
         create_supers(initconds.initsupers, sdm.gbxmaps.get_local_ngridboxes_hostcopy());
     auto gbxs = create_gbxs(sdm.gbxmaps, initconds.initgbxs, allsupers);
     prepare_to_timestep(gbxs, allsupers);
-    Kokkos::Profiling::popRegion();
+    // Kokkos::Profiling::popRegion();
 
     // do timestepping from t=0 to t=t_end
-    Kokkos::Profiling::pushRegion("timestep");
+    // Kokkos::Profiling::pushRegion("timestep");
     timestep_cleo(t_end, gbxs, allsupers);
-    Kokkos::Profiling::popRegion();
+    // Kokkos::Profiling::popRegion();
 
-    Kokkos::Profiling::popRegion();
+    // Kokkos::Profiling::popRegion();
     return 0;
   }
 };
