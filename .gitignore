@@ -12,9 +12,11 @@
 .DS_Store
 __pycache__
 .clang-format
+_kokkostools
 
 build*/
 docs/source/_autosummary
 examples/examplesolutions
 roughpaper/scratch/share
 roughpaper/scratch/test_new_superdrops.py
+*.sqlite
