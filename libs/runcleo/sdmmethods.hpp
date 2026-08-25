@@ -215,8 +215,10 @@ class SDMMethods {
                         SupersInDomain& allsupers, const SDMMo mo) const {
     // Kokkos::Profiling::ScopedRegion region("timestep_sdm_microphysics");
 
+    Kokkos::Profiling::pushRegion("condensation");
     const auto domainsupers = allsupers.domain_supers();
     const auto any_nsupers_change = sdm_microphysics(t_sdm, t_next, d_gbxs, domainsupers, mo);
+    Kokkos::Profiling::popRegion();
 
     if (any_nsupers_change) {
       allsupers.sort_totsupers(d_gbxs);

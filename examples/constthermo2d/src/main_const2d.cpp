@@ -86,10 +86,13 @@ inline GridboxMaps auto create_gbxmaps(const Config& config) {
 }
 
 inline auto create_movement(const unsigned int motionstep, const CartesianMaps& gbxmaps) {
-  const auto terminalv = RogersGKTerminalVelocity{};
-  const Motion<CartesianMaps> auto motion =
-      CartesianMotion(motionstep, &step2dimlesstime, terminalv);
+  // const auto terminalv = RogersGKTerminalVelocity{};
+  // const Motion<CartesianMaps> auto motion =
+  //     CartesianMotion(motionstep, &step2dimlesstime, terminalv);
 
+  // const BoundaryConditions<CartesianMaps> auto boundary_conditions = NullBoundaryConditions{};
+
+  const Motion<CartesianMaps> auto motion = NullMotion{};
   const BoundaryConditions<CartesianMaps> auto boundary_conditions = NullBoundaryConditions{};
 
   return cartesian_movement(gbxmaps, motion, boundary_conditions);
@@ -115,7 +118,8 @@ inline MicrophysicalProcess auto create_microphysics(const Config& config,
 
   const MicrophysicalProcess auto colls = config_collisions(config, tsteps);
 
-  return cond >> colls;
+  // return cond >> colls;
+  return cond;
 }
 
 template <typename Dataset, typename Store>
