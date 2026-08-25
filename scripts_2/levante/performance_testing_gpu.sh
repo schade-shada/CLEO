@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=cleo_gpu
+#SBATCH --job-name=cleo_gpu_10giB
 #SBATCH --partition=gpu
 #SBATCH --constraint=a100_40
 #SBATCH --nodes=1
@@ -7,7 +7,7 @@
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=128
 #SBATCH --mem=150G
-#SBATCH --time=02:00:00
+#SBATCH --time=05:00:00
 #SBATCH --mail-user=harshada.balasubramanian@mpimet.mpg.de
 #SBATCH --mail-type=FAIL
 #SBATCH --account=bk1341
@@ -39,6 +39,6 @@ export NSYS_PREFIX="ncu \
   --section MemoryWorkloadAnalysis \
   --section MemoryWorkloadAnalysis_Chart \
   --target-processes all \
-    -o ${roofline_output}/cleo_constthermo_test_roofline"
+    -o ${roofline_output}/constthermo_1gbx_10gib"
 
 "${CLEO_PATH2CLEO}/scripts_2/levante/build_compile_run_plot_cleo.sh" constthermo2d cuda gcc "${CLEO_PATH2CLEO}"

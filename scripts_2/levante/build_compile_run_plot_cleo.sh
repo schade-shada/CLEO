@@ -139,6 +139,6 @@ else
 fi
 
 # 3) Plot (no nsys)
-echo "Running (plot): ${CLEO_PYTHON} ${pythonscript} ${path2CLEO} ${CLEO_PATH2BUILD} ${base_args} --do_plot_results"
-${CLEO_PYTHON} "${pythonscript}" "${path2CLEO}" "${CLEO_PATH2BUILD}" ${base_args} --do_plot_results
+# echo "Running (plot): ${CLEO_PYTHON} ${pythonscript} ${path2CLEO} ${CLEO_PATH2BUILD} ${base_args} --do_plot_results"
+# ${CLEO_PYTHON} "${pythonscript}" "${path2CLEO}" "${CLEO_PATH2BUILD}" ${base_args} --do_plot_results
 ### ---------------------------------------------------- ###
