@@ -62,7 +62,7 @@ case "${experiment}" in
     ;;
 
   constthermo2d)
-    path2build=/scratch/m/m301159/profile_run/one_gbx/10giB/build_const2d/
+    path2build=/scratch/m/m301159/profile_run/one_gbx/20giB/build_const2d/
     build_flags="-DCLEO_COUPLED_DYNAMICS=fromfile -DCLEO_DOMAIN=cartesian ${cleo_common_flags}"
     executables="const2d"
 

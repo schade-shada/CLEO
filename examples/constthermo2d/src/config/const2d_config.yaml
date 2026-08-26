@@ -21,12 +21,12 @@
 ### Initialization Parameters for constthermo2d_inputfiles.py ###
 python_inputfiles:
   zgrid_max: 1500                              # domain size in z [m]
-  xgrid_max: 65000                             # domain size in x [m]
+  xgrid_max: 130000                             # domain size in x [m]
   ygrid_max: 20                                # domain size in y [m]
   zgrid_ngbxs: 1                               # z direction ngbxs <- note(!) zgrid_ngbxs * xgrid_ngbxs == ngbxs (see below)
   xgrid_ngbxs: 1                               # x direction ngbxs <- note(!) zgrid_ngbxs * xgrid_ngbxs == ngbxs (see below)
   sd_zlim: 1500                                # max z coord of initial superdroplets
-  nsupers_pergbx: 134217726                    # number of SDs per gridbox below sd_zlim <- note(!) must be consistent with maxnsupers (see below)
+  nsupers_pergbx: 268435454                    # number of SDs per gridbox below sd_zlim <- note(!) must be consistent with maxnsupers (see below)
   rspan:                                       # [min, max] range of radii to sample [m]
     - 3e-9
     - 3e-6
@@ -59,7 +59,7 @@ kokkos_settings:
 domain:
   nspacedims : 2                                            # no. of spatial dimensions to model
   ngbxs : 1                                                 # total number of Gbxs
-  maxnsupers: 134217726                                     # maximum number of SDs
+  maxnsupers: 268435454                                     # maximum number of SDs
 
 timesteps:
   CONDTSTEP : 1                                               # time between SD condensation [s]
@@ -88,7 +88,7 @@ outputdata:
 microphysics:
   condensation:
     do_alter_thermo : true                                      # true = cond/evap alters the thermodynamic state
-    maxniters : 50                                              # maximum no. iterations of Newton Raphson Method
+    maxniters : 150                                              # maximum no. iterations of Newton Raphson Method
     MINSUBTSTEP : 0.001                                         # minimum subtimestep in cases of substepping [s]
     rtol : 0.0                                                # relative tolerance for implicit Euler integration
     atol : 0.01                                               # absolute tolerance for implicit Euler integration
