@@ -65,8 +65,9 @@ class Condensation:
         workload.add_operation("/", 2)
         workload.add_operation("exp", 1)
 
-        # temperature read
+        # Safe naive memory model: one scalar input (`temp`) and one scalar output (`psat`).
         workload.bytes_read += 8
+        workload.bytes_written += 8
 
         return workload
 
@@ -79,8 +80,9 @@ class Condensation:
         workload.add_operation("+", 1)
         workload.add_operation("/", 1)
 
-        # temperature and pressure read
-        workload.bytes_read += 16
+        # Read the scalar state inputs and write the scalar result.
+        workload.bytes_read += 3 * 8
+        workload.bytes_written += 8
 
         return workload
 
@@ -98,8 +100,9 @@ class Condensation:
         workload.add_operation("-", 2)
         workload.add_operation("/", 5)
 
-        # temperature and pressure read
-        workload.bytes_read += 16
+        # Read the relevant state values and write the diffusion-factor output.
+        workload.bytes_read += 3 * 8
+        workload.bytes_written += 8
 
         return workload
 
@@ -148,12 +151,13 @@ class Condensation:
         workload.add_operation("*", 4)
         workload.add_operation("/", 1)
 
-        # radius + solute properties + temperature
+        # read the droplet and thermodynamic inputs and write the output pair {akoh, bkoh}
         workload.bytes_read += (
             8 +       # radius
             3 * 8 +   # solute properties
             8         # temperature
         )
+        workload.bytes_written += 2 * 8
 
         return workload
 
@@ -173,7 +177,8 @@ class Condensation:
             workload.add_operation("/", 1)
 
         # s_ratio, Kohler factors, diffusion factor, radius
-        workload.bytes_read += 4 * 8
+        workload.bytes_read += 5 * 8
+        workload.bytes_written += 8
 
         return workload
 
@@ -183,9 +188,9 @@ class Condensation:
 
         # Conceptually:
         # drop.change_radius(newr)
-        # No arithmetic in the modelled update itself; just a stored value.
+        # The updated radius is stored back into the superdroplet state.
 
-        workload.bytes_read += 8
+        workload.bytes_read += 2 * 8
         workload.bytes_written += 8
 
         return workload
@@ -198,7 +203,7 @@ class Condensation:
         workload.add_operation("-", 1)
         workload.add_operation("*", 1)
 
-        workload.bytes_read += 8
+        workload.bytes_read += 3 * 8
         workload.bytes_written += 8
 
         return workload
@@ -210,7 +215,7 @@ class Condensation:
         # This is the multiplicity weighting applied to the condensed mass.
         workload.add_operation("*", 1)
 
-        workload.bytes_read += 8
+        workload.bytes_read += 2 * 8
         workload.bytes_written += 8
 
         return workload
@@ -261,9 +266,8 @@ class Condensation:
         # temp += delta_temp
         workload.add_operation("+", 1)
 
-        # State:
-        # press, temp, qvap, qcond, ...
-        workload.bytes_read += 8 * 4
-        workload.bytes_written += 8 * 3
+        # State variables are read as inputs and updated in place.
+        workload.bytes_read += 5 * 8
+        workload.bytes_written += 3 * 8
 
         return workload
