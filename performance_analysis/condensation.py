@@ -56,9 +56,13 @@ class Condensation:
 
         workload = Workload()
 
-        # Placeholder operation count
+        # psat = PREF * exp(A * (T - TREF) / (T - B)) / P0
+        # Roughly: one temperature scaling, two subtractions, one division,
+        # one exponential, and a couple of multiplications/divisions for the
+        # prefactor and normalisation.
         workload.add_operation("*", 3)
-        workload.add_operation("+", 2)
+        workload.add_operation("-", 2)
+        workload.add_operation("/", 2)
         workload.add_operation("exp", 1)
 
         # temperature read
@@ -70,9 +74,10 @@ class Condensation:
 
         workload = Workload()
 
-        # Placeholder operation count
+        # s_ratio = (press * qvap) / ((Mr_ratio + qvap) * psat)
         workload.add_operation("*", 2)
         workload.add_operation("+", 1)
+        workload.add_operation("/", 1)
 
         # temperature and pressure read
         workload.bytes_read += 16
@@ -83,9 +88,15 @@ class Condensation:
 
         workload = Workload()
 
-        # Placeholder operation count
-        workload.add_operation("*", 4)
-        workload.add_operation("+", 3)
+        # This is the largest per-gridbox term. It includes:
+        # - temperature/pressure scaling
+        # - polynomial-like terms in T and P
+        # - two diffusion-factor contributions
+        # - a final combination into fkl + fdl
+        workload.add_operation("*", 8)
+        workload.add_operation("+", 5)
+        workload.add_operation("-", 2)
+        workload.add_operation("/", 5)
 
         # temperature and pressure read
         workload.bytes_read += 16
@@ -132,10 +143,10 @@ class Condensation:
 
         workload = Workload()
 
-        # Placeholder
+        # akoh = akoh_constant / temp
+        # bkoh = bkoh_constant * msol * ionic / mr_sol
         workload.add_operation("*", 4)
-        workload.add_operation("+", 3)
-        workload.add_operation("/")
+        workload.add_operation("/", 1)
 
         # radius + solute properties + temperature
         workload.bytes_read += (
@@ -153,10 +164,13 @@ class Condensation:
 
         for _ in range(n_iterations):
 
+            # Based on the Newton-Raphson-style root finding used in the
+            # implicit Euler solver, each iteration performs a small set of
+            # arithmetic updates.
             workload.add_operation("*", 5)
             workload.add_operation("+", 4)
-            workload.add_operation("-")
-            workload.add_operation("/")
+            workload.add_operation("-", 1)
+            workload.add_operation("/", 1)
 
         # s_ratio, Kohler factors, diffusion factor, radius
         workload.bytes_read += 4 * 8
@@ -169,6 +183,7 @@ class Condensation:
 
         # Conceptually:
         # drop.change_radius(newr)
+        # No arithmetic in the modelled update itself; just a stored value.
 
         workload.bytes_read += 8
         workload.bytes_written += 8
@@ -179,6 +194,10 @@ class Condensation:
 
         workload = Workload()
 
+        # mass_condensed = (drop.condensate_mass() - old_m_cond) * drop.get_xi()
+        workload.add_operation("-", 1)
+        workload.add_operation("*", 1)
+
         workload.bytes_read += 8
         workload.bytes_written += 8
 
@@ -187,6 +206,9 @@ class Condensation:
     def apply_multiplicity(self):
 
         workload = Workload()
+
+        # This is the multiplicity weighting applied to the condensed mass.
+        workload.add_operation("*", 1)
 
         workload.bytes_read += 8
         workload.bytes_written += 8
@@ -215,26 +237,29 @@ class Condensation:
 
         workload = Workload()
 
-        # dry_air_density(...)
+        # rho_dry = press / ((Rgas_dry + Rgas_v * qvap) * temp)
         workload.add_operation("*", 2)
-        workload.add_operation("/")
-        workload.add_operation("+")
+        workload.add_operation("+", 1)
+        workload.add_operation("/", 1)
 
         # delta_qcond = totrho_condensed / rho_dry
-        workload.add_operation("/")
+        workload.add_operation("/", 1)
 
         # qvap -= delta_qcond
-        workload.add_operation("-")
+        workload.add_operation("-", 1)
 
         # qcond += delta_qcond
-        workload.add_operation("+")
+        workload.add_operation("+", 1)
 
-        # latent_v / moist_specific_heat(...)
-        workload.add_operation("/")
-        workload.add_operation("*")
+        # moist_specifc_heat = Cp_dry + Cp_v * qvap + C_l * qcond
+        # delta_temp = (Latent_v / moist_specifc_heat) * delta_qcond
+        workload.add_operation("*", 2)
+        workload.add_operation("+", 2)
+        workload.add_operation("/", 1)
+        workload.add_operation("*", 1)
 
         # temp += delta_temp
-        workload.add_operation("+")
+        workload.add_operation("+", 1)
 
         # State:
         # press, temp, qvap, qcond, ...
