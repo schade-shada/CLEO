@@ -1,17 +1,21 @@
 from workload import Workload
 
-class Condensation:
 
-    def run_step(self, n_sd_per_gbx):
-        """
-        Workload corresponding to one condensation call
-        for one gridbox.
-        """
+class Condensation:
+    """Naive but formula-grounded condensation workload model.
+
+    These counts aim to reflect the dominant algebraic structure in the C++
+    condensation solver without claiming exact instruction counts for any specific
+    compiler or hardware pipeline.
+    """
+
+    def run_step(self, n_sd_per_gbx, maxniters_newton_raphson=50):
+        """Workload corresponding to one condensation call for one gridbox."""
 
         workload = Workload()
 
         workload.add(
-            self.superdroplets_change(n_sd_per_gbx)
+            self.superdroplets_change(n_sd_per_gbx, maxniters_newton_raphson)
         )
 
         workload.add(
@@ -20,35 +24,20 @@ class Condensation:
 
         return workload
 
-    def superdroplets_change(self, n_sd_per_gbx):
+    def superdroplets_change(self, n_sd_per_gbx, maxniters_newton_raphson=50):
 
         workload = Workload()
 
-        # ----------------------------------------------------
-        # These are calculated once per gridbox
-        # ----------------------------------------------------
+        # These are calculated once per gridbox.
+        workload.add(self.saturation_pressure())
+        workload.add(self.supersaturation_ratio())
+        workload.add(self.diffusion_factor())
 
+        # Each superdroplet performs the same condensation update, so scale one
+        # representative superdroplet workload by n_sd_per_gbx.
         workload.add(
-            self.saturation_pressure()
+            self.superdrop_mass_change(maxniters_newton_raphson).scale(n_sd_per_gbx)
         )
-
-        workload.add(
-            self.supersaturation_ratio()
-        )
-
-        workload.add(
-            self.diffusion_factor()
-        )
-
-        # ----------------------------------------------------
-        # This is executed once per superdroplet
-        # ----------------------------------------------------
-
-        for _ in range(n_sd_per_gbx):
-
-            workload.add(
-                self.superdrop_mass_change()
-            )
 
         return workload
 
@@ -57,15 +46,12 @@ class Condensation:
         workload = Workload()
 
         # psat = PREF * exp(A * (T - TREF) / (T - B)) / P0
-        # Roughly: one temperature scaling, two subtractions, one division,
-        # one exponential, and a couple of multiplications/divisions for the
-        # prefactor and normalisation.
+        # Scalar expression with conversion, subtraction, division, and exp.
         workload.add_operation("*", 3)
         workload.add_operation("-", 2)
         workload.add_operation("/", 2)
         workload.add_operation("exp", 1)
 
-        # Safe naive memory model: one scalar input (`temp`) and one scalar output (`psat`).
         workload.bytes_read += 8
         workload.bytes_written += 8
 
@@ -80,7 +66,6 @@ class Condensation:
         workload.add_operation("+", 1)
         workload.add_operation("/", 1)
 
-        # Read the scalar state inputs and write the scalar result.
         workload.bytes_read += 3 * 8
         workload.bytes_written += 8
 
@@ -90,55 +75,50 @@ class Condensation:
 
         workload = Workload()
 
-        # This is the largest per-gridbox term. It includes:
-        # - temperature/pressure scaling
-        # - polynomial-like terms in T and P
-        # - two diffusion-factor contributions
-        # - a final combination into fkl + fdl
-        workload.add_operation("*", 8)
-        workload.add_operation("+", 5)
-        workload.add_operation("-", 2)
-        workload.add_operation("/", 5)
+        # diffusion_factor() in thermodynamic_equations.cpp is a dominant
+        # gridbox-level term, containing powers, divisions, and a product-plus-sum
+        # structure. This is a formula-grounded estimate rather than exact ISA-level
+        # accounting.
+        workload.add_operation("*", 9)
+        workload.add_operation("fma", 1)
+        workload.add_operation("+", 1)
+        workload.add_operation("-", 1)
+        workload.add_operation("/", 6)
+        workload.add_operation("pow", 2)
 
-        # Read the relevant state values and write the diffusion-factor output.
         workload.bytes_read += 3 * 8
         workload.bytes_written += 8
 
         return workload
 
-    def superdrop_mass_change(self):
+    def superdrop_mass_change(self, maxniters_newton_raphson=50):
 
         workload = Workload()
 
-        # old_m_cond = drop.condensate_mass()
-        workload.add(
-            self.read_condensate_mass()
-        )
+        workload.add(self.condensate_mass())
+        workload.add(self.kohler_factors())
+        workload.add(self.solve_condensation(maxniters_newton_raphson))
+        workload.add(self.change_radius())
+        workload.add(self.calculate_mass_change())
+        workload.add(self.apply_multiplicity())
+        workload.add(self.accumulate_mass_condensed())
 
-        # kohler_factors(drop, temp)
-        workload.add(
-            self.kohler_factors()
-        )
+        return workload
 
-        # impe.solve_condensation(...)
-        workload.add(
-            self.solve_condensation()
-        )
+    def condensate_mass(self):
 
-        # drop.change_radius(newr)
-        workload.add(
-            self.change_radius()
-        )
+        workload = Workload()
 
-        # drop.condensate_mass() - old_m_cond
-        workload.add(
-            self.calculate_mass_change()
-        )
+        # mass() = msol * density_factor + massconst * rcubed(); then subtract
+        # msol and clamp with fmax(0.0, ...). This is an algebraic proxy of the
+        # actual droplet mass calculation.
+        workload.add_operation("*", 3)
+        workload.add_operation("fma", 1)
+        workload.add_operation("-", 1)
+        workload.add_operation("max", 1)
 
-        # * drop.get_xi()
-        workload.add(
-            self.apply_multiplicity()
-        )
+        workload.bytes_read += 3 * 8
+        workload.bytes_written += 8
 
         return workload
 
@@ -148,35 +128,38 @@ class Condensation:
 
         # akoh = akoh_constant / temp
         # bkoh = bkoh_constant * msol * ionic / mr_sol
-        workload.add_operation("*", 4)
-        workload.add_operation("/", 1)
+        workload.add_operation("*", 3)
+        workload.add_operation("/", 3)
 
-        # read the droplet and thermodynamic inputs and write the output pair {akoh, bkoh}
-        workload.bytes_read += (
-            8 +       # radius
-            3 * 8 +   # solute properties
-            8         # temperature
-        )
+        workload.bytes_read += 8 + 3 * 8 + 8
         workload.bytes_written += 2 * 8
 
         return workload
 
-    def solve_condensation(self):
+    def solve_condensation(self, maxniters_newton_raphson=50):
 
         workload = Workload()
-        n_iterations = 10  # Default number of iterations
 
-        for _ in range(n_iterations):
+        # Worst-case path: this is the most expensive kernel in the condensation
+        # step. In the actual implicit Euler solver, each Newton update evaluates
+        # g(z) and g'(z) multiple times, applies a clamp with fmax, repeats until
+        # convergence, and may also hit the adaptive sub-timestepping branch. We
+        # therefore model a conservative upper-bound cost for the full solver.
+        for _ in range(maxniters_newton_raphson):
+            # One worst-case NR iteration is dominated by:
+            #   - 2 g(z) evaluations: sqrt + pow + multiple multiplies/divides/adds
+            #   - 1 g'(z) evaluation: sqrt + pow + multiply/divide chain
+            #   - 1 update step: ziter * (1 - num/denom)
+            #   - 1 clamp: fmax(ziter, 1e-8)
+            #   - 1 convergence check
+            workload.add_operation("*", 12)
+            workload.add_operation("+", 8)
+            workload.add_operation("-", 8)
+            workload.add_operation("/", 8)
+            workload.add_operation("pow", 4)
+            workload.add_operation("sqrt", 2)
+            workload.add_operation("max", 1)
 
-            # Based on the Newton-Raphson-style root finding used in the
-            # implicit Euler solver, each iteration performs a small set of
-            # arithmetic updates.
-            workload.add_operation("*", 5)
-            workload.add_operation("+", 4)
-            workload.add_operation("-", 1)
-            workload.add_operation("/", 1)
-
-        # s_ratio, Kohler factors, diffusion factor, radius
         workload.bytes_read += 5 * 8
         workload.bytes_written += 8
 
@@ -186,9 +169,9 @@ class Condensation:
 
         workload = Workload()
 
-        # Conceptually:
-        # drop.change_radius(newr)
-        # The updated radius is stored back into the superdroplet state.
+        # radius = max(newr, dryr); return radius - oldradius.
+        workload.add_operation("max", 1)
+        workload.add_operation("-", 1)
 
         workload.bytes_read += 2 * 8
         workload.bytes_written += 8
@@ -212,7 +195,7 @@ class Condensation:
 
         workload = Workload()
 
-        # This is the multiplicity weighting applied to the condensed mass.
+        # multiplicity scaling: deltamass * xi
         workload.add_operation("*", 1)
 
         workload.bytes_read += 2 * 8
@@ -220,11 +203,13 @@ class Condensation:
 
         return workload
 
-    def read_condensate_mass(self):
+    def accumulate_mass_condensed(self):
 
         workload = Workload()
 
-        workload.bytes_read += 8
+        # mass_condensed += deltamass; the reduction value is kept live in a
+        # register rather than re-read from memory each time.
+        workload.add_operation("+", 1)
 
         return workload
 
@@ -250,14 +235,12 @@ class Condensation:
         # delta_qcond = totrho_condensed / rho_dry
         workload.add_operation("/", 1)
 
-        # qvap -= delta_qcond
+        # qvap -= delta_qcond and qcond += delta_qcond
         workload.add_operation("-", 1)
-
-        # qcond += delta_qcond
         workload.add_operation("+", 1)
 
-        # moist_specifc_heat = Cp_dry + Cp_v * qvap + C_l * qcond
-        # delta_temp = (Latent_v / moist_specifc_heat) * delta_qcond
+        # moist_specific_heat = Cp_dry + Cp_v * qvap + C_l * qcond
+        # delta_temp = (Latent_v / moist_specific_heat) * delta_qcond
         workload.add_operation("*", 2)
         workload.add_operation("+", 2)
         workload.add_operation("/", 1)
@@ -266,7 +249,6 @@ class Condensation:
         # temp += delta_temp
         workload.add_operation("+", 1)
 
-        # State variables are read as inputs and updated in place.
         workload.bytes_read += 5 * 8
         workload.bytes_written += 3 * 8
 

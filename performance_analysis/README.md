@@ -119,13 +119,3 @@ Each `Workload` object exposes:
 - `workload.arithmetic_intensity()`
 
 These are then used to estimate the roofline position of the condensation kernel.
-
-## Why this is useful
-
-The purpose of this estimate is to answer the question:
-
-- Is the condensation path dominated by arithmetic cost or by memory transfer?
-- Which subroutines are likely to be the main bottlenecks?
-- Is a change in algorithm likely to improve the arithmetic intensity or just move the bottleneck?
-
-This is a useful planning tool before deeper instrumentation or cache-aware optimisation work.

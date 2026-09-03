@@ -7,16 +7,18 @@ class Microphysics:
 
         self.condensation = condensation
 
-    def run_step(self, subt, n_sd_per_gbx):
+    def run_step(self, subt, n_sd_per_gbx, maxniters_newton_raphson):
 
         return self.condensation.run_step(
-            n_sd_per_gbx
+            n_sd_per_gbx,
+            maxniters_newton_raphson=maxniters_newton_raphson,
         )
 
 def sdm_microphysics(
     n_gbx,
     n_sd_per_gbx,
     microphysics,
+    maxniters_newton_raphson,
 ):
 
     total_workload = Workload()
@@ -25,16 +27,18 @@ def sdm_microphysics(
     #
     # TeamPolicy(ngbxs, team_size)
     #
-    # One team = one gridbox
+    # One team = one gridbox, all executed in parallel on real hardware.
+    # Every gridbox does identical work here, so instead of looping n_gbx
+    # times we compute one gridbox's workload and scale it, which is what
+    # the roofline model needs (total FLOPs/bytes, independent of ordering).
 
-    for _ in range(n_gbx):
+    gbx_workload = microphysics.run_step(
+        subt=0,
+        n_sd_per_gbx=n_sd_per_gbx,
+        maxniters_newton_raphson=maxniters_newton_raphson,
+    )
 
-        gbx_workload = microphysics.run_step(
-            subt=0,
-            n_sd_per_gbx=n_sd_per_gbx,
-        )
-
-        total_workload.add(gbx_workload)
+    total_workload.add(gbx_workload.scale(n_gbx))
 
     return total_workload
 
@@ -44,24 +48,23 @@ def run_step(
     n_gbx,
     n_sd_per_gbx,
     microphysics,
+    condtstep,
+    maxniters_newton_raphson,
 ):
 
     total_workload = Workload()
 
-    t_sdm = t_mdl
+    # Every SDM step does identical work, so instead of looping and adding
+    # per-step, compute the number of steps and scale one step's workload.
+    n_steps = -(-(t_mdl_next - t_mdl) // condtstep)  # ceil division
 
-    while t_sdm < t_mdl_next:
+    workload = sdm_microphysics(
+        n_gbx=n_gbx,
+        n_sd_per_gbx=n_sd_per_gbx,
+        microphysics=microphysics,
+        maxniters_newton_raphson=maxniters_newton_raphson,
+    )
 
-        t_sdm_next = t_sdm + 1
-
-        workload = sdm_microphysics(
-            n_gbx=n_gbx,
-            n_sd_per_gbx=n_sd_per_gbx,
-            microphysics=microphysics,
-        )
-
-        total_workload.add(workload)
-
-        t_sdm = t_sdm_next
+    total_workload.add(workload.scale(n_steps))
 
     return total_workload
