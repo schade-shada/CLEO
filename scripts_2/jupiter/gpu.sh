@@ -7,7 +7,7 @@
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=72
 #SBATCH --gpus-per-node=1
-#SBATCH --time=00:30:00
+#SBATCH --time=00:55:00
 #SBATCH --account=xspies
 #SBATCH --output=./cleo_gpu.%j.out
 #SBATCH --error=./cleo_gpu.%j.out
@@ -42,6 +42,24 @@ case "${mode}" in
             "" "" "${CLEO_YACYAXTROOT}" false false 204800 build,compile
         ;;
     run)
+
+        roofline_output="${CLEO_PATH2CLEO}/nsys_output"
+        mkdir -p "${roofline_output}"
+
+        export KOKKOS_TOOLS_LIBS="/e/home/jusers/balasubramanian2/jupiter/kokkos-tools/install/lib64/libkp_nvtx_connector.so"
+
+        export NSYS_PREFIX="ncu \
+        --verbose \
+        --nvtx \
+        --nvtx-include condensation/ \
+        --replay-mode kernel \
+        -c 30 \
+        --kill yes \
+        --cache-control none \
+        --set roofline \
+        --target-processes all \
+        -o ${roofline_output}/constthermo_500mib"
+
         echo "=== Running ${experiment} (${buildtype}, ${compilername}) ==="
         "${CLEO_PATH2CLEO}/scripts_2/jupiter/build_compile_run_plot_cleo.sh" \
             "${experiment}" "${buildtype}" "${compilername}" "${CLEO_PATH2CLEO}"

@@ -146,5 +146,5 @@ if step_enabled run; then
 fi
 
 if step_enabled plot; then
-    run_python_stage --do_plot_results
+    : # no plotting stage enabled in the current helper flow
 fi
