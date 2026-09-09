@@ -1,0 +1,26 @@
+figure.dpi: 200
+figure.figsize: 6, 6
+savefig.dpi: 300
+savefig.transparent: True
+font.family: sans-serif
+font.sans-serif: Tahoma
+font.size: 12
+text.usetex: False
+mathtext.fontset: custom
+mathtext.rm: sans
+mathtext.it: sans:italic
+mathtext.bf: sans:bold
+axes.linewidth: 1
+axes.spines.top: False
+axes.spines.right: False
+axes.titlesize: 14
+axes.labelsize: 14
+axes.formatter.min_exponent: 2
+axes.formatter.use_mathtext: True
+xtick.major.size: 6
+ytick.major.size: 6
+xtick.labelsize: 12
+ytick.labelsize: 12
+legend.fontsize: 12
+legend.frameon: False
+figure.titlesize: 16

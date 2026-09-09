@@ -1,3 +1,4 @@
+# %%
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
@@ -10,12 +11,9 @@ def offset_axis(ax, offset_pts=8) -> None:
 
 def plot_roofline(
     machine,
-    roofline,
     output_path=None,
     show=False,
-    kernel_name="",
 ):
-
     """
     Plot a generic Roofline model.
 
@@ -40,14 +38,10 @@ def plot_roofline(
     peak_bw = machine["peak_memory_bandwidth"]
     peak_perf = machine["peak_flops_dp"]
 
-
     unit_scale = 1e9
 
     bw_gbs = peak_bw / unit_scale
     perf_gflops = peak_perf / unit_scale
-
-    achieved_ai = roofline['AI']
-    achieved_perf = roofline["performance"] / unit_scale
 
     # ================================================================
     # Plot limits
@@ -222,33 +216,25 @@ def plot_roofline(
     )
 
     # ================================================================
-    # Achieved performance point
+    # Region labels
     # ================================================================
 
-    ax.scatter(
-        achieved_ai,
-        achieved_perf,
-        color="#e77b85",
+    # Memory-bound label
+    ax.text(
+        knee_ai / 3.0,
+        y_min * 3.0,
+        "Memory Bound",
+        ha="center",
+        va="center",
     )
 
-    # ================================================================
-    # Kernel annotation
-    # ================================================================
-
-    # Move the label above and to the right of the point.
-    # The two lines are separated to avoid the previous overlap.
-    label = (
-        f"{kernel_name}\n"
-        f"({achieved_ai:.2f}, {achieved_perf:.2f})"
-    )
-
-    ax.annotate(
-        label,
-        xy=(achieved_ai, achieved_perf),
-        xytext=(10, -5),
-        textcoords="offset points",
-        ha="left",
-        va="top",
+    # Compute-bound label
+    ax.text(
+        np.sqrt(knee_ai * x_max),
+        y_min * 6.0,
+        "Compute Bound",
+        ha="center",
+        va="center",
     )
 
 
@@ -270,3 +256,19 @@ def plot_roofline(
     # plt.close(fig)
 
     return output_path
+
+# if __name__ == "__main__":
+
+
+#%%
+machine = {
+    "peak_memory_bandwidth": 4000e9,  # bytes/s
+    "peak_flops_dp": 34000e9,          # FLOP/s
+}
+
+plot_roofline(
+    machine=machine,
+    output_path="generic_roofline.png",
+    show=True,
+)
+# %%
