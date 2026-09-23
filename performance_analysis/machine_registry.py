@@ -15,6 +15,15 @@ MACHINE_REGISTRY = {
         "peak_memory_bandwidth": 1.56e12,
         "memory_capacity": 40 * 1024**3,
     },
+
+    "juelich_gh200": {
+        "name": "NVIDIA GH200 120GB",
+        "peak_flops_dp": 34e12,
+        "peak_flops_sp": 67e12,
+        "peak_memory_bandwidth": 4.0e12,
+        "memory_capacity": 120 * 1024**3,
+    },
+
 }
 
 

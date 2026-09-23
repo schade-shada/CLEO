@@ -11,7 +11,7 @@ def main():
     # Simple CLEO configuration (mimics exp_config.yaml)
     # --------------------------------------------------------
 
-    machine_name = "levante_a100"
+    machine_name = "juelich_gh200"
 
     n_gbx = 10
     # nsupers_pergbx = 134217726
