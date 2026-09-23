@@ -1,24 +1,14 @@
 #!/bin/bash
-#SBATCH --job-name=cleo_gpu
-#SBATCH --partition=booster
-#SBATCH --nodes=1
-#SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=72
-#SBATCH --gpus-per-node=1
-#SBATCH --time=00:30:00
-#SBATCH --account=xspies
-#SBATCH --output=./cleo_gpu.%j.out
-#SBATCH --error=./cleo_gpu.%j.out
 
 ### ============================================================ ###
-###                    Jupiter GPU job script                    ###
+###                    Vanilla CPU job script                    ###
 ### ============================================================ ###
 ###
 ### Usage:
-###   ./scripts_2/jupiter/gpu.sh build [experiment] [buildtype] [compilername]
-###   sbatch scripts_2/jupiter/gpu.sh [all|run] [experiment] [buildtype] [compilername]
+###   ./scripts_2/vanilla/cpu.sh build [experiment] [buildtype] [compilername]
+###   ./scripts_2/vanilla/cpu.sh [all|run] [experiment] [buildtype] [compilername]
 ###
-###   Run from (or submit from) the CLEO root directory.
+###   Run from the CLEO root directory.
 ###
 ### Modes:
 ###   all    configure, compile, run + plot (default)    (steps: all)
@@ -44,17 +34,15 @@ export CLEO_PATH2BUILD="${CLEO_PATH2BUILD:-<PATH/TO/BUILD/ROOT>}"
 ### -------------------------------------------------------- ###
 
 ### ---------------------- environment --------------------- ###
-source /etc/profile
-# Required if the .venv does not use the default environment.
-module load Stages/2026 Python/3.13.5
+# no module system: mpic++, mpicc and cmake must already be on PATH
 ### -------------------------------------------------------- ###
 
 ### --------------------- configuration -------------------- ###
-export CLEO_MACHINE="jupiter"
+export CLEO_MACHINE="vanilla"
 
 # "experiment buildtype compilername"
 experiments=(
-  "constthermo2d cuda gcc"
+  "as2017 serial gcc"
 )
 
 # command prefix for run mode (e.g. srun), empty to run directly
