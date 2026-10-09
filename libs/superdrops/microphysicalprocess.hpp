@@ -64,7 +64,7 @@ concept MicrophysicalProcess =
  */
 template <MicrophysicalProcess Microphys1, MicrophysicalProcess Microphys2>
 struct CombinedMicrophysicalProcess {
- private:
+ public:
   Microphys1 a; /**< The first instance of type of MicrophysicalProcess. */
   Microphys2 b; /**< The second instance of type of MicrophysicalProcess. */
 
