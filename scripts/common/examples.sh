@@ -67,7 +67,8 @@ case "${example}" in
 
   constthermo2d)
     build_subdir=build_const2d/
-    build_flags="-DCLEO_COUPLED_DYNAMICS=fromfile -DCLEO_DOMAIN=cartesian ${cleo_common_flags}"
+    build_flags="-DCLEO_COUPLED_DYNAMICS=fromfile -DCLEO_DOMAIN=cartesian ${cleo_common_flags} \
+-DCLEO_PROFILE_PER_PROCESS=true"
     executables="const2d"
 
     pythonscript=${path2CLEO}/examples/constthermo2d/constthermo2d.py

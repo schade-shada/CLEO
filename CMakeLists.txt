@@ -40,6 +40,11 @@ add_subdirectory(${yamlcpppath} ${CLEO_BINARY_DIR}/yaml-cpp)
 # print default compiler flags
 message(STATUS "CLEO primary CMAKE_CXX_FLAGS: ${CMAKE_CXX_FLAGS}")
 
+# time each microphysical process separately (see SDMMethods::sdm_microphysics)
+if(CLEO_PROFILE_PER_PROCESS)
+  add_compile_definitions(CLEO_PROFILE_PER_PROCESS)
+endif()
+
 # add directories of CLEO libray and main program
 add_subdirectory(libs)
 

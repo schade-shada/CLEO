@@ -181,12 +181,13 @@ class SDMMethods {
    * @param mo SDMMonitor to use.
    * @return true if number of superdroplets in any gridbox has changed during microphysics
    */
-  template <SDMMonitor SDMMo>
-  bool sdm_microphysics(const unsigned int t_sdm, const unsigned int t_next, const viewd_gbx d_gbxs,
-                        const subviewd_supers domainsupers, const SDMMo mo) const {
+  template <MicrophysicalProcess P, SDMMonitor SDMMo>
+  bool sdm_microphysics(const P proc, const unsigned int t_sdm, const unsigned int t_next,
+                        const viewd_gbx d_gbxs, const subviewd_supers domainsupers,
+                        const SDMMo mo) const {
     // TODO(ALL) use scratch space for parallel region(?)
     const size_t ngbxs(d_gbxs.extent(0));
-    const auto functor = SDMMicrophysicsFunctor{microphys, t_sdm, t_next, d_gbxs, domainsupers, mo};
+    const auto functor = SDMMicrophysicsFunctor{proc, t_sdm, t_next, d_gbxs, domainsupers, mo};
 
     auto any_nsupers_change = bool{false};
     Kokkos::parallel_reduce("sdm_microphysics", TeamPolicy(ngbxs, KCS::team_size), functor,
@@ -213,10 +214,28 @@ class SDMMethods {
   template <SDMMonitor SDMMo>
   void sdm_microphysics(const unsigned int t_sdm, const unsigned int t_next, const viewd_gbx d_gbxs,
                         SupersInDomain& allsupers, const SDMMo mo) const {
-    Kokkos::Profiling::ScopedRegion region("timestep_sdm_microphysics");
+#ifdef CLEO_PROFILE_PER_PROCESS
+    /* time each process of combined microphysics (a >> b) in its own kernel and region */
+    if constexpr (requires(Microphys m) { m.a; m.b; }) {
+      sdm_microphysics("timestep_sdm_microphysics_condensation", microphys.a, t_sdm, t_next, d_gbxs,
+                       allsupers, mo);
+      sdm_microphysics("timestep_sdm_microphysics_collisions", microphys.b, t_sdm, t_next, d_gbxs,
+                       allsupers, mo);
+      return;
+    }
+#endif
+    sdm_microphysics("timestep_sdm_microphysics", microphys, t_sdm, t_next, d_gbxs, allsupers, mo);
+  }
+
+  template <MicrophysicalProcess P, SDMMonitor SDMMo>
+  void sdm_microphysics(const char* region_name, const P proc, const unsigned int t_sdm,
+                        const unsigned int t_next, const viewd_gbx d_gbxs,
+                        SupersInDomain& allsupers, const SDMMo mo) const {
+    Kokkos::Profiling::ScopedRegion region(region_name);
 
     const auto domainsupers = allsupers.domain_supers();
-    const auto any_nsupers_change = sdm_microphysics(t_sdm, t_next, d_gbxs, domainsupers, mo);
+    const auto any_nsupers_change =
+        sdm_microphysics(proc, t_sdm, t_next, d_gbxs, domainsupers, mo);
 
     if (any_nsupers_change) {
       allsupers.sort_totsupers(d_gbxs);
