@@ -24,6 +24,9 @@
 #include <Kokkos_Profiling_ScopedRegion.hpp>
 #include <Kokkos_Random.hpp>
 #include <Kokkos_StdAlgorithms.hpp>
+#include <limits>
+#include <stdexcept>
+#include <string>
 
 #include "./kokkosaliases.hpp"
 #include "gridboxes/boundary_conditions.hpp"
@@ -33,6 +36,7 @@
 #include "gridboxes/supersindomain.hpp"
 #include "gridboxes/transport_across_domain.hpp"
 #include "observers/observers.hpp"
+#include "superdrops/collisions/shuffle.hpp"
 #include "superdrops/microphysicalprocess.hpp"
 #include "superdrops/motion.hpp"
 #include "superdrops/sdmmonitor.hpp"
@@ -167,6 +171,43 @@ class SDMMethods {
   Microphys microphys; /**< object that is type of MicrophysicalProcess. */
 
   /**
+   * @brief Largest number of superdroplets in any gridbox.
+   */
+  size_t max_nsupers_in_gbxs(const viewd_gbx d_gbxs) const {
+    auto max_nsupers = size_t{0};
+    Kokkos::parallel_reduce(
+        "max_nsupers_in_gbxs", Kokkos::RangePolicy<ExecSpace>(0, d_gbxs.extent(0)),
+        KOKKOS_LAMBDA(const size_t ii, size_t& m) {
+          const auto n = d_gbxs(ii).supersingbx.nsupers();
+          m = (n > m) ? n : m;
+        },
+        Kokkos::Max<size_t>(max_nsupers));
+    return max_nsupers;
+  }
+
+  /**
+   * @brief Team policy for SDM microphysics, one team per gridbox, with enough team scratch
+   * memory for the shuffle indices of the largest gridbox (see collisions/shuffle.hpp).
+   *
+   * Uses level 0 scratch (fast, e.g. shared memory / LDS on GPUs) if it is large enough,
+   * otherwise level 1 (global memory). Throws if a gridbox has more superdroplets than
+   * shuffle_idx_t can index.
+   */
+  TeamPolicy microphysics_policy(const viewd_gbx d_gbxs) const {
+    const auto max_nsupers = max_nsupers_in_gbxs(d_gbxs);
+    if (max_nsupers > static_cast<size_t>(std::numeric_limits<shuffle_idx_t>::max()) + 1) {
+      const auto err = std::string("gridbox with ") + std::to_string(max_nsupers) +
+                       " superdroplets is too large for shuffle_idx_t";
+      throw std::invalid_argument(err);
+    }
+
+    const auto bytes = shuffle_scratch_bytes(max_nsupers);
+    auto policy = TeamPolicy(d_gbxs.extent(0), KCS::team_size);
+    const auto level = (bytes <= static_cast<size_t>(TeamPolicy::scratch_size_max(0))) ? 0 : 1;
+    return policy.set_scratch_size(level, Kokkos::PerTeam(bytes));
+  }
+
+  /**
    * @brief run SDM microphysics for each gridbox (using sub-timestepping routine).
    *
    * This function runs SDM microphysics for each gridbox using a sub-timestepping routine.
@@ -184,12 +225,11 @@ class SDMMethods {
   template <SDMMonitor SDMMo>
   bool sdm_microphysics(const unsigned int t_sdm, const unsigned int t_next, const viewd_gbx d_gbxs,
                         const subviewd_supers domainsupers, const SDMMo mo) const {
-    // TODO(ALL) use scratch space for parallel region(?)
     const size_t ngbxs(d_gbxs.extent(0));
     const auto functor = SDMMicrophysicsFunctor{microphys, t_sdm, t_next, d_gbxs, domainsupers, mo};
 
     auto any_nsupers_change = bool{false};
-    Kokkos::parallel_reduce("sdm_microphysics", TeamPolicy(ngbxs, KCS::team_size), functor,
+    Kokkos::parallel_reduce("sdm_microphysics", microphysics_policy(d_gbxs), functor,
                             Kokkos::LOr<bool>(any_nsupers_change));
     return any_nsupers_change;
   }

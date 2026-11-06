@@ -6,84 +6,72 @@
  * Project: collisions
  * Created Date: Thursday 6th March 2025
  * Author: Clara Bayley (CB)
- * Additional Contributors:
+ * Additional Contributors: Harshada Balasubramanian
  * -----
  * License: BSD 3-Clause "New" or "Revised" License
  * https://opensource.org/licenses/BSD-3-Clause
  * -----
  * File Description:
- * Implementaiton file for functions for Kokkos compatibile thread-safe
- * versions of C++ Fisher-Yates serial shuffling algorithm.
+ * Parallel random shuffle of the order of super-droplets in a gridbox using a Feistel
+ * network bijection with compaction (Algorithm 1 of Mitchell et al., "Bandwidth-Optimal
+ * Random Shuffling for GPUs"). The super-droplets themselves are not moved: the shuffle
+ * writes an array of indices into the gridbox's view of super-droplets.
  */
 
 #ifndef LIBS_SUPERDROPS_COLLISIONS_SHUFFLE_HPP_
 #define LIBS_SUPERDROPS_COLLISIONS_SHUFFLE_HPP_
 
 #include <Kokkos_Core.hpp>
-#include <Kokkos_StdAlgorithms.hpp>
+#include <cstdint>
 
 #include "../kokkosaliases_sd.hpp"
-#include "../superdrop.hpp"
-#include "./urbg.hpp"
+#include "./feistel.hpp"
 
 /**
- * @brief Randomly shuffles the order of super-droplet objects in a view
- * using Fisher-Yates algorithm
+ * @brief Number of bytes of team scratch memory needed to shuffle a gridbox with
+ * nsupers super-droplets.
+ */
+KOKKOS_INLINE_FUNCTION size_t shuffle_scratch_bytes(const size_t nsupers) {
+  return viewd_shuffleidx::shmem_size(nsupers);
+}
+
+/**
+ * @brief Returns a view of nsupers shuffle indices in team scratch memory.
  *
- * Thread-Safe Kokkos compatible version of Fisher-Yates shuffling algorithm for
- * super-droplets. Shuffling is done in serial (slow!) on single thread per team
+ * Uses level 0 scratch if it was requested at launch (see sdmmethods.hpp), otherwise level 1.
+ * Works on a copy of the team's scratch space so every call returns the same memory,
+ * which is safe because the indices are only needed during one call of do_collisions.
+ * Aborts if neither level has enough scratch memory.
+ */
+KOKKOS_INLINE_FUNCTION viewd_shuffleidx shuffle_idx_scratch(const TeamMember& team_member,
+                                                            const size_t nsupers) {
+  const auto bytes = shuffle_scratch_bytes(nsupers);
+  for (int level = 0; level < 2; ++level) {
+    auto scratch = team_member.team_scratch(level);  // copy: does not use up the team's scratch
+    void* ptr = scratch.get_shmem_aligned(bytes, alignof(shuffle_idx_t), level);
+    if (ptr != nullptr) {
+      return viewd_shuffleidx(static_cast<shuffle_idx_t*>(ptr), nsupers);
+    }
+  }
+  Kokkos::abort("not enough team scratch memory for the shuffle indices of a gridbox");
+  return viewd_shuffleidx{};
+}
+
+/**
+ * @brief Writes a random permutation of {0, ..., nsupers - 1} into idx, in parallel over the team.
  *
- * Uses only one member of a Kokkos team to randomly shuffle the order of super-droplet objects
- * in the 'supers' view using Kokkos compatible rewrite of C++ standard library Fisher-Yates
- * shuffling algorithm. Afterwards synchronizes the team and returns the view of
- * shuffled super-droplets. Uses Kokkos thread safe random number generator from pool.
+ * Pads nsupers to n = 4^h >= nsupers, evaluates the Feistel bijection b = f(i) for every
+ * i < n, keeps the b < nsupers and compacts them in order of i with an exclusive prefix
+ * sum. When nsupers is a power of 4, no padding is needed and the scan is skipped.
  *
  * @param team_member The Kokkos team member.
- * @param supers The view of superdroplets to shuffle.
- * @param genpool The random number generator pool.
- * @return The shuffled view of superdroplets.
+ * @param idx View of at least nsupers indices (e.g. from shuffle_idx_scratch).
+ * @param nsupers Number of super-droplets to shuffle.
+ * @param base Random 64-bit number from which the Feistel round keys are made. It must be the
+ * same for every thread in the team and new for every shuffle (e.g. drawn from a GenRandomPool
+ * in a Kokkos::single, see DoCollisions::do_collisions).
  */
-KOKKOS_FUNCTION viewd_supers shuffle_supers(const TeamMember& team_member,
-                                            const viewd_supers supers, const GenRandomPool genpool);
-/**
- * @brief Swaps the values of two super-droplets.
- *
- * Equivalent to C++98 std::swap but works on device as well as host (gpu compatible).
- *
- * _Note:_ Involves a copy construction and two assignment operations, which may not be
- * efficient if Superdrop class stores large quantities of data.
- *
- * @param a The first super-droplet.
- * @param b The second super-droplet.
- */
-KOKKOS_INLINE_FUNCTION void device_swap(Superdrop& a, Superdrop& b) {
-  Superdrop c(a);
-  a = b;
-  b = c;
-}
-
-/**
- * @brief Shuffles the order of super-droplets in a view.
- *
- * Randomly shuffles the order of super-droplets using the URBG
- * (Uniform Random Bit Generator) struct (on device). Supers included in
- * shuffle are from iterators in range [first, first+dist] (inclusive), e.g.
- * if first points to the 5th superdroplet and dist=2, then the 5th, 6th and
- * 7th superdroplets will be shuffled amongst each other.
- *
- * @tparam DeviceType The Kokkos device type.
- * @param urbg The random number generator.
- * @param first iterator/pointer to first element in supers to shuffle
- * @param dist number of elements (including first) to shuffle
- * @return The shuffled view of super-droplets.
- */
-template <class DeviceType>
-KOKKOS_INLINE_FUNCTION void fisher_yates_shuffle(URBG<DeviceType> urbg, const auto first,
-                                                 const auto dist) {
-  for (auto iter(dist); iter > 0; --iter) {
-    const auto randiter = urbg(0, iter + 1);  // random uint64_t equidistributed between [0, i]
-    device_swap(*(first + iter), *(first + randiter));
-  }
-}
+KOKKOS_FUNCTION void shuffle_indices(const TeamMember& team_member, const viewd_shuffleidx idx,
+                                     const size_t nsupers, const uint64_t base);
 
 #endif  // LIBS_SUPERDROPS_COLLISIONS_SHUFFLE_HPP_

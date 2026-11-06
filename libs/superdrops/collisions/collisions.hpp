@@ -31,6 +31,7 @@
 #include "../state.hpp"
 #include "../superdrop.hpp"
 #include "./shuffle.hpp"
+#include "./urbg.hpp"
 
 namespace dlc = dimless_constants;
 
@@ -76,7 +77,8 @@ struct CollideSupersFunctor {
   const Probability& probability;        /**< Object for calculating collision probabilities. */
   const EnactCollision& enact_collision; /**< Enactment object for enacting collision events. */
   const GenRandomPool genpool;           /**< Kokkos thread-safe random number generator pool.*/
-  const subviewd_supers supers;          /**< The randomly shuffled view of super-droplets. */
+  const subviewd_supers supers;          /**< The view of super-droplets in the gridbox. */
+  const viewd_shuffleidx idx; /**< Shuffled order of supers: pair jj is idx(2jj), idx(2jj+1) */
   const double scale_p;                  /**< The probability scaling factor. */
   const double DELT;   /**< time interval [s] over which probability of collision is calculated. */
   const double VOLUME; /**< The volume [m^-3]. */
@@ -164,7 +166,8 @@ struct CollideSupersFunctor {
    */
   KOKKOS_INLINE_FUNCTION void operator()(const size_t jj, size_t& oob_nsupers) const {
     const auto kk = size_t{jj * 2};
-    const auto null_supers = collide_superdroplet_pair(supers(kk), supers(kk + 1), scale_p, VOLUME);
+    const auto null_supers =
+        collide_superdroplet_pair(supers(idx(kk)), supers(idx(kk + 1)), scale_p, VOLUME);
     oob_nsupers += null_supers;
   }
 };
@@ -204,24 +207,26 @@ struct DoCollisions {
    * In serial Kokkos::parallel_for([...]) is equivalent to loop:
    * for (size_t jj(0); jj < npairs; ++jj) {[...]}.
    *
-   * _NOTE:_ function assumes supers is already randomly shuffled and these superdrops are
-   * colliding some 'VOLUME' [m^3]).
+   * _NOTE:_ function assumes idx is a random permutation of the super-droplets in supers and
+   * these superdrops are colliding some 'VOLUME' [m^3]).
    *
    * @param team_member The Kokkos team member.
-   * @param supers The randomly shuffled view of super-droplets.
+   * @param supers The view of super-droplets.
+   * @param idx The shuffled order of supers (see shuffle_indices).
    * @param volume The volume in which to calculate the probability of collisions.
    * @return Total number of null (xi=0) superdrops produced by collisions.
    */
   KOKKOS_INLINE_FUNCTION size_t collide_supers(const TeamMember& team_member,
-                                               subviewd_supers supers, const double volume) const {
+                                               subviewd_supers supers, const viewd_shuffleidx idx,
+                                               const double volume) const {
     const auto nsupers = static_cast<size_t>(supers.extent(0));
     const auto npairs = size_t{nsupers / 2};  // no. pairs of superdrops (=floor() for nsupers > 0)
     const auto scale_p = double{nsupers * (nsupers - 1.0) / (2.0 * npairs)};
     const auto VOLUME = double{volume * dlc::VOL0};  // volume in which collisions occur [m^3]
 
     auto oob_nsupers = size_t{0};
-    const auto functor =
-        CollideSupersFunctor{probability, enact_collision, genpool, supers, scale_p, DELT, VOLUME};
+    const auto functor = CollideSupersFunctor{
+        probability, enact_collision, genpool, supers, idx, scale_p, DELT, VOLUME};
     Kokkos::parallel_reduce(Kokkos::TeamThreadRange(team_member, npairs), functor, oob_nsupers);
     team_member.team_barrier();  // synchronise threads
 
@@ -251,7 +256,8 @@ struct DoCollisions {
    * @brief Executes collision events for pairs of superdroplets.
    *
    * Superdroplet collision algorithm adapted from collision-coalescence in Shima et al. 2009.
-   * This function shuffles supers to get random pairs of superdroplets (SDs) and then calls the
+   * This function shuffles the order of supers (without moving them) to get random pairs of
+   * superdroplets (SDs) and then calls the
    * collision function for each pair assuming these superdrops are colliding some 'VOLUME' [m^3].
    * Function is designed to be called inside a parallelised loop for member 'teamMember'.
    *
@@ -263,12 +269,27 @@ struct DoCollisions {
   KOKKOS_INLINE_FUNCTION subviewd_supers do_collisions(const TeamMember& team_member,
                                                        subviewd_supers supers,
                                                        const double volume) const {
-    /* Randomly shuffle order of superdroplet objects
-    in supers in order to generate random pairs */
-    supers = shuffle_supers(team_member, supers, genpool);
+    /* Randomly shuffle the order of superdroplets in supers in order to generate random pairs.
+    idx is in team scratch memory requested at launch in SDMMethods::sdm_microphysics */
+    const auto nsupers = static_cast<size_t>(supers.extent(0));
+    const auto idx = shuffle_idx_scratch(team_member, nsupers);
+
+    /* one random base for the Feistel round keys per gridbox per shuffle,
+    drawn by one thread and shared with the team */
+    const auto pool = genpool;
+    auto base = uint64_t{0};
+    Kokkos::single(
+        Kokkos::PerTeam(team_member),
+        [=](uint64_t& b) {
+          auto gen = pool.get_state();
+          b = gen.urand64();
+          pool.free_state(gen);
+        },
+        base);
+    shuffle_indices(team_member, idx, nsupers, base);
 
     /* collide all randomly generated pairs of SDs */
-    const auto oob_nsupers = collide_supers(team_member, supers, volume);
+    const auto oob_nsupers = collide_supers(team_member, supers, idx, volume);
 
     if (oob_nsupers == 0) {
       return supers;

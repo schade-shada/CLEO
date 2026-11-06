@@ -23,6 +23,7 @@
 #include <Kokkos_DualView.hpp>
 #include <Kokkos_Pair.hpp>
 #include <Kokkos_Random.hpp>
+#include <cstdint>
 
 #include "superdrop.hpp"
 
@@ -58,6 +59,17 @@ using HostTeamMember = HostTeamPolicy::member_type;   /**< Member in host parall
  * Defines an alias for a pool of Kokkos random number generators in the execution space.
  */
 using GenRandomPool = Kokkos::Random_XorShift64_Pool<ExecSpace>;
+
+/**
+ * @brief Index type for the shuffled order of super-droplets in a gridbox (see shuffle.hpp).
+ *
+ * uint32_t allows up to 2^32 super-droplets per gridbox, uint16_t up to 65536 and halves the
+ * scratch memory needed for the indices.
+ */
+using shuffle_idx_t = uint32_t;
+/**< Unmanaged view of shuffle indices in (team) scratch memory. */
+using viewd_shuffleidx = Kokkos::View<shuffle_idx_t*, ExecSpace::scratch_memory_space,
+                                      Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
 
 using viewd_constcoords = Kokkos::View<const double[3]>;
 using viewd_coords = Kokkos::View<double[3]>;
