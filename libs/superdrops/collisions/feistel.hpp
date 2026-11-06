@@ -40,7 +40,7 @@ KOKKOS_INLINE_FUNCTION uint64_t mix(uint64_t x) {
  * @brief Number of bits in each half, h, so that the padded domain n = 4^h >= m (and h >= 1).
  */
 KOKKOS_INLINE_FUNCTION unsigned int half_bits(const uint64_t m) {
-  auto h = (unsigned int){1};
+  auto h = 1u;
   while ((uint64_t{1} << (2 * h)) < m) {
     ++h;
   }

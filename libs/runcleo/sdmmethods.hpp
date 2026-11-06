@@ -225,7 +225,6 @@ class SDMMethods {
   template <SDMMonitor SDMMo>
   bool sdm_microphysics(const unsigned int t_sdm, const unsigned int t_next, const viewd_gbx d_gbxs,
                         const subviewd_supers domainsupers, const SDMMo mo) const {
-    const size_t ngbxs(d_gbxs.extent(0));
     const auto functor = SDMMicrophysicsFunctor{microphys, t_sdm, t_next, d_gbxs, domainsupers, mo};
 
     auto any_nsupers_change = bool{false};
