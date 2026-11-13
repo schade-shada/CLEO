@@ -15,6 +15,9 @@ team scratch memory and pair ``jj`` of the collisions is ``supers(idx(2jj)), sup
 .. doxygenfunction:: shuffle_idx_scratch
    :project: superdrops
 
+.. doxygenfunction:: shuffle_scratch_size
+   :project: superdrops
+
 .. doxygenfunction:: shuffle_scratch_bytes
    :project: superdrops
 

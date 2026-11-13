@@ -33,13 +33,22 @@ KOKKOS_FUNCTION void shuffle_indices(const TeamMember& team_member, const viewd_
       idx(i) = static_cast<shuffle_idx_t>(feistel::bijection(i, keys, h));
     });
   } else {
-    /* flag = (b < nsupers); exclusive prefix sum of flag gives where each valid b goes */
+    /* 1. b = f(i) for every i < n, stored after the first nsupers entries of idx.
+    In its own loop so that each b is computed once (parallel_scan calls its lambda twice) */
+    const auto outputs = viewd_shuffleidx(idx.data() + nsupers, n);  // b < n fits shuffle_idx_t
+    // because max(shuffle_idx_t) + 1 is a power of 4 and nsupers <= it (see sdmmethods.hpp)
+    Kokkos::parallel_for(Kokkos::TeamThreadRange(team_member, n), [=](const size_t i) {
+      outputs(i) = static_cast<shuffle_idx_t>(feistel::bijection(i, keys, h));
+    });
+    team_member.team_barrier();
+
+    /* 2. flag = (b < nsupers); exclusive prefix sum of flag gives where each valid b goes */
     Kokkos::parallel_scan(Kokkos::TeamThreadRange(team_member, n),
                           [=](const size_t i, size_t& pos, const bool final) {
-                            const auto b = feistel::bijection(i, keys, h);
+                            const auto b = outputs(i);
                             const auto flag = size_t{b < nsupers};
                             if (final && flag) {
-                              idx(pos) = static_cast<shuffle_idx_t>(b);
+                              idx(pos) = b;
                             }
                             pos += flag;
                           });
