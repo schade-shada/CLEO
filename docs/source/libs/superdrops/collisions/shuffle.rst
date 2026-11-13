@@ -21,6 +21,12 @@ team scratch memory and pair ``jj`` of the collisions is ``supers(idx(2jj)), sup
 Header file: ``<libs/superdrops/collisions/feistel.hpp>``
 `[source] <https://github.com/yoctoyotta1024/CLEO/blob/main/libs/superdrops/collisions/feistel.hpp>`_
 
+.. doxygentypedef:: feistel::RoundKeys
+   :project: superdrops
+
+.. doxygenfunction:: feistel::round_keys
+   :project: superdrops
+
 .. doxygenfunction:: feistel::bijection
    :project: superdrops
 
