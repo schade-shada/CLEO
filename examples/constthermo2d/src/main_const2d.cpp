@@ -136,6 +136,9 @@ inline Observer auto create_superdrops_observer(const unsigned int interval, Dat
 template <typename Dataset, typename Store>
 inline Observer auto create_observer(const Config& config, const Timesteps& tsteps,
                                      Dataset& dataset, Store& store) {
+#ifdef CLEO_PROFILE_PER_PROCESS
+  return NullObserver{};  // no output, so profiling only times the SDM
+#else
   const auto obsstep = tsteps.get_obsstep();
   const auto maxchunk = config.get_maxchunk();
   const auto ngbxs = config.get_ngbxs();
@@ -153,6 +156,7 @@ inline Observer auto create_observer(const Config& config, const Timesteps& tste
   const Observer auto obssd = create_superdrops_observer(obsstep, dataset, store, maxchunk);
 
   return obssd >> obs4 >> obs3 >> obs2 >> obs1 >> obs0;
+#endif
 }
 
 template <typename Dataset, typename Store>
