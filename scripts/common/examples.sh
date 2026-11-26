@@ -56,11 +56,13 @@ load_example_config() {
 
     constthermo2d)
       build_subdir=build_const2d/
-      build_flags="-DCLEO_COUPLED_DYNAMICS=fromfile -DCLEO_DOMAIN=cartesian ${cleo_common_flags}"
+      build_flags="-DCLEO_COUPLED_DYNAMICS=fromfile -DCLEO_DOMAIN=cartesian ${cleo_common_flags} \
+-DCLEO_PROFILE_PER_PROCESS=true"
       executables="const2d"
 
       pythonscript=${CLEO_PATH2CLEO}/examples/constthermo2d/constthermo2d.py
-      src_config_filename=${CLEO_PATH2CLEO}/examples/constthermo2d/src/config/const2d_config.yaml
+      # export CLEO_CONFIG to use another config, e.g. .../src/config/vanilla/const2d_500mib.yaml
+      src_config_filename=${CLEO_CONFIG:-${CLEO_PATH2CLEO}/examples/constthermo2d/src/config/const2d_config.yaml}
       script_args="${src_config_filename}"
       ;;
 
